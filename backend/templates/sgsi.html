@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AllSafe SGSI</title>
+<link rel="icon" type="image/png" href="/assets/sgsi-favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 20px;
+  color-scheme: dark;
+}
+
+body {
+  background: oklch(0.097 0.022 264);
+  color: oklch(0.96 0.005 250);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+/* Logo area */
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.logo-area img { height: 4rem; width: auto; }
+.logo-area h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: oklch(0.96 0.005 250);
+  text-align: center;
+}
+.logo-area p {
+  font-size: 0.875rem;
+  color: oklch(0.58 0.035 260);
+  text-align: center;
+}
+
+/* Card */
+.card {
+  width: 100%;
+  background: oklch(0.112 0.022 264);
+  border: 1px solid oklch(1 0 0 / 9%);
+  border-radius: 0.625rem;
+  padding: 1.5rem;
+}
+
+/* Form */
+.form-grid { display: grid; gap: 0.75rem; }
+
+.field { display: flex; flex-direction: column; gap: 0.375rem; }
+
+label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: oklch(0.96 0.005 250);
+  line-height: 1.25rem;
+}
+
+.input-wrap { position: relative; }
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  background: oklch(1 0 0 / 12%);
+  border: 1px solid oklch(1 0 0 / 12%);
+  border-radius: calc(0.625rem - 2px);
+  padding: 0.5rem 0.75rem;
+  color: oklch(0.96 0.005 250);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  line-height: 1.25rem;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+
+input[type="password"] { padding-right: 2.5rem; }
+
+input::placeholder { color: oklch(0.58 0.035 260); }
+
+input:focus {
+  border-color: oklch(0.535 0.233 22.3);
+  box-shadow: 0 0 0 2px oklch(0.535 0.233 22.3 / 20%);
+}
+
+/* Password toggle */
+.eye-btn {
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: oklch(0.58 0.035 260);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+  outline: none;
+}
+.eye-btn:hover { color: oklch(0.96 0.005 250); }
+
+/* Error toast */
+.toast {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  background: oklch(0.19 0.028 264);
+  border: 1px solid oklch(1 0 0 / 9%);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: oklch(0.96 0.005 250);
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+.toast svg { color: oklch(0.535 0.233 22.3); flex-shrink: 0; }
+
+/* Button */
+.btn {
+  width: 100%;
+  background: oklch(0.535 0.233 22.3);
+  color: oklch(0.98 0.003 0);
+  border: none;
+  border-radius: calc(0.625rem - 2px);
+  padding: 0.5rem 1rem;
+  height: 2.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background .15s, opacity .15s;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
+.btn:hover { background: oklch(0.48 0.22 22.3); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+/* Forgot */
+.forgot {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  color: oklch(0.58 0.035 260);
+  margin-top: 0.75rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color .15s;
+  width: 100%;
+}
+.forgot:hover { color: oklch(0.96 0.005 250); }
+
+/* Footer */
+.footer {
+  font-size: 0.75rem;
+  color: oklch(0.30 0.02 264);
+  text-align: center;
+}
+
+/* Spinner */
+.spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid oklch(0.98 0.003 0 / 30%);
+  border-top-color: oklch(0.98 0.003 0);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-area">
+    <img src="/assets/allsafe-logo.png" alt="AllSafe">
+    <div>
+      <h1>AllSafe SGSI</h1>
+      <p>Sistema de Gestión ISO 27001</p>
+    </div>
+  </div>
+
+  <div class="card" style="width:100%">
+    <div class="toast" id="toast">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="toast-msg">Usuario o contraseña incorrectos.</span>
+    </div>
+    <form id="form" class="form-grid">
+      <div class="field">
+        <label for="u">Usuario</label>
+        <input type="text" id="u" name="username" autocomplete="username" placeholder="usuario" required>
+      </div>
+      <div class="field">
+        <label for="p">Contraseña</label>
+        <div class="input-wrap">
+          <input type="password" id="p" name="password" autocomplete="current-password" placeholder="••••••••" required>
+          <button type="button" class="eye-btn" id="eye" aria-label="Mostrar contraseña" tabindex="-1">
+            <svg id="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="eye-close" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn" type="submit" id="btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Iniciar sesión
+      </button>
+    </form>
+    <button class="forgot" type="button">¿Olvidaste tu contraseña?</button>
+  </div>
+
+  <p class="footer">AllSafe Security Solutions · Datos cifrados localmente</p>
+</div>
+
+<script>
+// Password show/hide
+document.getElementById('eye').addEventListener('click', () => {
+  const p = document.getElementById('p');
+  const open = document.getElementById('eye-open');
+  const close = document.getElementById('eye-close');
+  if (p.type === 'password') {
+    p.type = 'text';
+    open.style.display = 'none';
+    close.style.display = '';
+  } else {
+    p.type = 'password';
+    open.style.display = '';
+    close.style.display = 'none';
+  }
+});
+
+// Form submit
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const toast = document.getElementById('toast');
+  toast.style.display = 'none';
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('u').value,
+        password: document.getElementById('p').value
+      })
+    });
+    if (!r.ok) {
+      toast.style.display = 'flex';
+    }
+  } catch {
+    toast.style.display = 'flex';
+  }
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Iniciar sesión';
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

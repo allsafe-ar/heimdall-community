@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cPanel Login</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0a1628 0%, #0d2044 50%, #0a1628 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Helvetica Neue', Arial, sans-serif; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .brand-logo { width: 44px; height: 44px; background: #ff6c00; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: white; letter-spacing: -1px; }
+  .brand-name { color: white; font-size: 24px; font-weight: 300; }
+  .brand-name strong { font-weight: 700; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.5); padding: 2rem; width: 100%; max-width: 360px; }
+  .card-title { font-size: 1.1rem; font-weight: 600; color: #1a1a2e; margin-bottom: 0.25rem; }
+  .card-sub { font-size: 0.8rem; color: #888; margin-bottom: 1.5rem; }
+  label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  input { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.9rem; color: #222; outline: none; transition: border-color .15s; }
+  input:focus { border-color: #ff6c00; }
+  .field { margin-bottom: 1.1rem; }
+  button { width: 100%; background: #ff6c00; color: white; border: none; border-radius: 6px; padding: 0.75rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: background .15s; letter-spacing: 0.03em; font-family: inherit; }
+  button:hover { background: #e05d00; }
+  button:disabled { opacity: 0.7; cursor: not-allowed; }
+  .error { background: #fff5f5; border: 1px solid #fecaca; border-radius: 6px; padding: 0.6rem 0.85rem; font-size: 0.8rem; color: #b91c1c; margin-bottom: 1rem; display: none; }
+  .footer { margin-top: 1.25rem; text-align: center; font-size: 0.72rem; color: rgba(255,255,255,.3); }
+  .security-bar { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0.75rem; }
+  .security-bar span { font-size: 0.68rem; color: #aaa; }
+  .server-info { font-size: 0.7rem; color: #ccc; background: rgba(255,255,255,.05); border-radius: 4px; padding: 4px 10px; margin-bottom: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="brand">
+  <div class="brand-logo">cP</div>
+  <div class="brand-name"><strong>c</strong>Panel</div>
+</div>
+<div class="server-info" id="serverInfo">Cargando información del servidor...</div>
+<div class="card">
+  <div class="card-title">Iniciar sesión en cPanel</div>
+  <div class="card-sub">Ingrese sus credenciales para administrar su cuenta de alojamiento</div>
+  <div class="error" id="err">Error al iniciar sesión. Verifique sus credenciales.</div>
+  <form id="form">
+    <div class="field">
+      <label for="user">Usuario</label>
+      <input type="text" id="user" name="user" placeholder="usuario de cpanel" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="pass">Contraseña</label>
+      <input type="password" id="pass" name="pass" placeholder="••••••••" autocomplete="current-password" required>
+    </div>
+    <button type="submit" id="btn">Iniciar sesión</button>
+  </form>
+  <div class="security-bar">
+    <span>🔒</span>
+    <span>Conexión segura · Las sesiones son monitoreadas</span>
+  </div>
+</div>
+<div class="footer">cPanel, L.L.C. © 2026 · Todos los derechos reservados</div>
+<script>
+setTimeout(() => {
+  document.getElementById("serverInfo").textContent = "srv" + Math.floor(Math.random()*900+100) + ".hosting.empresa.com · WHM " + (11 + Math.floor(Math.random()*3)) + ".0." + Math.floor(Math.random()*900+100);
+}, 600);
+
+document.getElementById("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = document.getElementById("btn");
+  const err = document.getElementById("err");
+  err.style.display = "none";
+  btn.textContent = "Autenticando...";
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: document.getElementById("user").value, password: document.getElementById("pass").value })
+    });
+    if (!r.ok) err.style.display = "block";
+  } catch { err.style.display = "block"; }
+  btn.textContent = "Iniciar sesión";
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

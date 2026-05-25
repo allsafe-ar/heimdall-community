@@ -1,0 +1,32 @@
+{
+  "name": "heimdall-backend",
+  "version": "1.0.0",
+  "description": "Heimdall — Web Honeypot & Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.5.2",
+    "geoip-lite": "^2.0.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.6.0",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "author": "Eduardo Emiliano Alaniz <info@allsafe.com.ar>",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://github.com/allsafe-ar/heimdall-community",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allsafe-ar/heimdall-community.git"
+  }
+}

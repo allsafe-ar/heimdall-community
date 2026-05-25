@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Empleados — Iniciar sesión</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .header { background: #1e40af; color: white; width: 100%; padding: 0.85rem 2rem; display: flex; align-items: center; gap: 0.75rem; position: fixed; top: 0; left: 0; }
+  .header-logo { width: 28px; height: 28px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+  .header-logo span { color: #1e40af; font-weight: 800; font-size: 0.85rem; }
+  .header-name { font-weight: 600; font-size: 0.95rem; letter-spacing: 0.02em; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,.08); padding: 2.5rem; width: 100%; max-width: 380px; margin-top: 4rem; }
+  h1 { font-size: 1.35rem; font-weight: 700; color: #111; margin-bottom: 0.25rem; }
+  .sub { font-size: 0.82rem; color: #6b7280; margin-bottom: 1.75rem; }
+  label { display: block; font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; }
+  input { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.6rem 0.75rem; font-size: 0.9rem; color: #111; outline: none; transition: border-color .15s, box-shadow .15s; background: #fff; }
+  input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+  .field { margin-bottom: 1.1rem; }
+  .forgot { font-size: 0.75rem; color: #3b82f6; text-decoration: none; display: block; text-align: right; margin-top: 0.25rem; }
+  button { width: 100%; background: #1e40af; color: white; border: none; border-radius: 6px; padding: 0.7rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: background .15s; font-family: inherit; }
+  button:hover { background: #1e3a8a; }
+  button:disabled { opacity: 0.7; cursor: not-allowed; }
+  .error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 0.6rem 0.75rem; font-size: 0.8rem; color: #991b1b; margin-bottom: 1rem; display: none; }
+  .footer { font-size: 0.72rem; color: #9ca3af; text-align: center; margin-top: 1.5rem; line-height: 1.6; }
+  .divider { border: none; border-top: 1px solid #f3f4f6; margin: 1.25rem 0; }
+  .sso { width: 100%; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.65rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: inherit; }
+  .sso:hover { background: #f9fafb; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-logo"><span>C</span></div>
+  <span class="header-name">Portal de Empleados CorpNet</span>
+</div>
+<div class="card">
+  <h1>Iniciar sesión</h1>
+  <p class="sub">Usá tus credenciales corporativas para acceder al portal</p>
+  <div class="error" id="err">Usuario o contraseña incorrectos. Intente nuevamente.</div>
+  <form id="form">
+    <div class="field">
+      <label for="username">Email o usuario</label>
+      <input type="text" id="username" name="username" placeholder="vos@empresa.com" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+      <a class="forgot" href="#">¿Olvidaste tu contraseña?</a>
+    </div>
+    <button type="submit" id="btn">Iniciar sesión</button>
+  </form>
+  <hr class="divider">
+  <button class="sso" onclick="return false">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#4285F4"/></svg>
+    Iniciar sesión con Google (SSO)
+  </button>
+  <p class="footer">Al iniciar sesión, aceptás la Política de Uso Aceptable Corporativa.<br>© 2026 CorpNet Inc. — Soporte IT: it-help@corp.interno</p>
+</div>
+<script>
+document.getElementById("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = document.getElementById("btn");
+  const err = document.getElementById("err");
+  err.style.display = "none";
+  btn.textContent = "Iniciando sesión...";
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: document.getElementById("username").value, password: document.getElementById("password").value })
+    });
+    if (!r.ok) err.style.display = "block";
+  } catch { err.style.display = "block"; }
+  btn.textContent = "Iniciar sesión";
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>
