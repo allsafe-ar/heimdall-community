@@ -18,15 +18,33 @@
 
 ---
 
-Heimdall Community es una plataforma de honeypot web libre y open source con dashboard en tiempo real. Despliega servicios falsos que registran cada interacción — intentos de fuerza bruta, escáneres, bots e intrusos humanos — siendo completamente invisible para el tráfico legítimo.
+Heimdall Community es una plataforma de honeypot web libre y open source con dashboard en tiempo real. Despliega servicios falsos (portales de login, paneles de administración, APIs) que registran cada interacción — intentos de fuerza bruta, escáneres, bots e intrusos humanos — siendo completamente invisible para el tráfico legítimo.
 
 > El nombre viene de Heimdall — el dios Aesir que guarda el puente Bifrost en la mitología nórdica. Todo lo ve y todo lo escucha, sin dormir jamás.
 
 ---
 
+## ¿Qué es Heimdall Community?
+
+Heimdall Community le da a tu Blue Team visibilidad total sobre quién está sondeando tu infraestructura:
+
+- **4 templates de honeypot** — WordPress, cPanel, Portal Corporativo, Microsoft
+- **Señuelos HTTP y HTTPS** — Puertos 80 y 443 con soporte de certificado autofirmado
+- **Scoring de amenazas** — Cada evento recibe una clasificación de riesgo: BRUTE / SCAN / BOT / RECON / HUMAN
+- **Dashboard en tiempo real** — Feed de eventos en vivo via WebSocket con pause/resume sin perder eventos
+- **Lista de IPs** — Vista agregada de IPs atacantes con conteo de hits y geolocalización
+- **Historial de eventos** — Tabla paginada con filtros por tipo
+- **Estadísticas** — Total de eventos, IPs únicas, top atacantes, breakdown por tipo de ataque
+- **Control de acceso por roles** — `admin` / `viewer`
+- **Gestión de usuarios** — Crear, editar, habilitar/deshabilitar usuarios
+- **TOTP 2FA** — RFC 6238, configuración via código QR
+- **Tema Dark / Light / Sistema**
+
+---
+
 ## Instalación
 
-### Opción A — Script de instalación (recomendado)
+### Opción A — Script de instalación (recomendado para servidores Linux)
 
 ```bash
 git clone https://github.com/allsafe-ar/heimdall-community.git
@@ -34,34 +52,113 @@ cd heimdall-community
 chmod +x install.sh && sudo ./install.sh
 ```
 
+Probado en Ubuntu 22.04 / 24.04 y Debian 12.
+
 ### Opción B — Docker
 
 ```bash
 git clone https://github.com/allsafe-ar/heimdall-community.git
 cd heimdall-community
 cp backend/.env.example backend/.env
+# Editar backend/.env: configurar DB_PASSWORD y JWT_SECRET
 docker compose up -d
 ```
 
 ### Opción C — Manual
 
 ```bash
-cd backend && npm install && cp .env.example .env && npm start
-cd frontend && npm install && npm run build
+# Backend
+cd backend
+npm install
+cp .env.example .env
+# Editar .env: credenciales DB + JWT_SECRET fuerte (mín. 32 caracteres)
+npm start   # puerto 3005
+
+# Frontend
+cd frontend
+npm install
+npm run build   # Build de producción → dist/
 ```
 
-Credenciales por defecto: `admin` / `admin123` — **cambiar inmediatamente**.
+Credenciales por defecto (primer arranque): `admin` / `admin123` — **cambiar inmediatamente**.
 
 ---
 
-## Funcionalidades
+## Arquitectura
 
-- Templates de honeypot: WordPress, cPanel, Portal Corporativo, Microsoft
-- Scoring de amenazas: BRUTE / SCAN / BOT / RECON / HUMAN
-- Dashboard en tiempo real via WebSocket
-- Lista de IPs atacantes con geolocalización
-- Roles: admin / viewer
-- TOTP 2FA, lockout de cuentas
+```
+heimdall-community/
+├── backend/
+│   ├── server.js       # Backend en un solo archivo — motor honeypot + REST API + WebSocket
+│   ├── templates/      # Páginas HTML señuelo servidas como honeypots
+│   └── .env.example
+└── frontend/
+    └── src/
+        ├── pages/      # Dashboard, Eventos, IPs, Usuarios, Mi Cuenta
+        ├── components/ # StatsBar, TerminalCard, EventTable, IpListView, ...
+        └── lib/        # socket, api, cookies
+```
+
+### Backend
+
+- Servidor Express en un solo archivo (`server.js`)
+- MySQL 8.0+ — tablas creadas automáticamente en el primer arranque
+- Autenticación JWT (expiración 12h), TOTP 2FA, lockout de cuentas
+- WebSocket (Socket.IO) para streaming de eventos en vivo
+- Motor honeypot: captura IP, User-Agent, path, método, body — asigna threat score
+- Rate limiting: 5 intentos fallidos → lockout 15 min; 300 req/15 min por IP
+
+### Frontend
+
+- React 18 + Vite + TypeScript
+- Componentes shadcn/ui + Tailwind CSS v4
+- Feed en tiempo real con tope de 2000 eventos en memoria
+- Pause/resume del feed sin perder eventos (buffer interno)
+
+---
+
+## Templates de Honeypot
+
+| Template | Simula |
+|----------|--------|
+| `generic` | Portal Corporativo — login de empleados |
+| `wordpress` | Login de WordPress wp-admin |
+| `cpanel` | Panel de hosting cPanel |
+| `microsoft` | Inicio de sesión con cuenta Microsoft |
+
+El template activo se puede cambiar desde el dashboard sin reiniciar.
+
+---
+
+## Clasificación de Amenazas
+
+| Tipo | Descripción |
+|------|-------------|
+| `BRUTE` | Intentos repetidos de login — credential stuffing o fuerza bruta |
+| `SCAN` | Enumeración de paths / escaneo de vulnerabilidades |
+| `BOT` | Bot automatizado — scraping o sondeo |
+| `RECON` | Reconocimiento — recopilación de información |
+| `HUMAN` | Interacción manual probable |
+
+---
+
+## Roles
+
+| Rol | Capacidades |
+|-----|-------------|
+| `admin` | Acceso completo — usuarios, configuración, todos los eventos |
+| `viewer` | Dashboard — vista de solo lectura de eventos y estadísticas |
+
+---
+
+## Roadmap
+
+- Honeypot SSH (puerto 22, estilo cowrie) con logging de comandos
+- Shell falsa interactiva por Telnet
+- Alertas por email / webhook cuando el score supera un umbral
+- Exportación de eventos CSV / JSON
+- Mapa de calor geográfico de ataques
+- Blacklist automática de IPs via iptables
 
 ---
 
@@ -75,6 +172,8 @@ Creado por **Eduardo Emiliano Alaniz** ([@h4wkby73](https://github.com/h4wkby73)
 ## Licencia
 
 GNU Affero General Public License v3.0 — ver archivo [LICENSE](LICENSE).
+
+Si modificás y desplegás Heimdall Community como servicio, debés publicar tus modificaciones bajo la misma licencia.
 
 ---
 

@@ -94,8 +94,8 @@ heimdall-community/
 │   └── .env.example
 └── frontend/
     └── src/
-        ├── pages/      # Dashboard, Events, IP Profiler, Users, Audit
-        ├── components/ # StatsBar, TerminalCard, EventTable, IpProfile, ...
+        ├── pages/      # Dashboard, Events, IPs, Users, My Account
+        ├── components/ # StatsBar, TerminalCard, EventTable, IpListView, ...
         └── lib/        # socket, api, cookies
 ```
 
