@@ -1,7 +1,7 @@
 [![English](https://img.shields.io/badge/lang-en-blue)](README.md)
 
 <div align="center">
-  <img src="logo.png" alt="Heimdall Logo" width="300"/>
+  <img src="logo.png" alt="Heimdall Logo" width="500"/>
 
   # Heimdall Community — Monitor de Honeypot Web
 
