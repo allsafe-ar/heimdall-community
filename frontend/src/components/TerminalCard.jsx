@@ -3,12 +3,12 @@ import { getMeta, fmtTime } from '../lib/utils'
 
 const MAX_LINES = 500
 
-function TerminalLine({ ev, onIpClick }) {
+function TerminalLine({ ev }) {
   const meta = getMeta(ev.type)
   const flag = ev.flag || ''
   const country = ev.country || '??'
   const city = ev.city ? ` ${ev.city}` : ''
-  const portInfo = ev.ports ? ` [${ev.ports.join(',')}]` : (ev.port ? ` :${ev.port}` : '')
+  const portInfo = ev.port ? ` :${ev.port}` : ''
   const pathPart = ev.path ? ` ${ev.method || 'GET'} ${ev.path}` : portInfo
   const credPart = (ev.type === 'BRUTE' || ev.type === 'HUMAN') && ev.detail ? ` → ${ev.detail}` : ''
   const detail = pathPart + credPart
@@ -21,12 +21,9 @@ function TerminalLine({ ev, onIpClick }) {
       <span className={`${meta.color} font-semibold shrink-0 w-[76px] font-terminal`}>
         {meta.icon} {ev.type}
       </span>
-      <button
-        onClick={() => onIpClick(ev.ip)}
-        className="text-foreground hover:text-primary hover:underline underline-offset-2 font-medium shrink-0 text-left cursor-pointer transition-colors font-terminal"
-      >
+      <span className="text-foreground font-medium shrink-0 font-terminal">
         {ev.ip}
-      </button>
+      </span>
       <span className="text-muted-foreground/50 shrink-0 font-terminal">
         {flag} {country}{city}
       </span>
@@ -40,20 +37,19 @@ function TerminalLine({ ev, onIpClick }) {
   )
 }
 
-export default function TerminalCard({ events, onIpClick, paused, onTogglePause }) {
+export default function TerminalCard({ events, paused, onTogglePause }) {
   const bottomRef = useRef(null)
   const containerRef = useRef(null)
   const [autoScroll, setAutoScroll] = useState(true)
   const [filter, setFilter] = useState('TODOS')
 
   const types = [
-    { value: 'TODOS',    label: 'TODOS'    },
-    { value: 'BRUTE',    label: 'BRUTE'    },
-    { value: 'PORTSCAN', label: 'PORTSCAN' },
-    { value: 'SCAN',     label: 'SCAN'     },
-    { value: 'BOT',      label: 'BOT'      },
-    { value: 'RECON',    label: 'RECON'    },
-    { value: 'HUMAN',    label: 'HUMANO'   },
+    { value: 'TODOS', label: 'TODOS'  },
+    { value: 'BRUTE', label: 'BRUTE'  },
+    { value: 'SCAN',  label: 'SCAN'   },
+    { value: 'BOT',   label: 'BOT'    },
+    { value: 'RECON', label: 'RECON'  },
+    { value: 'HUMAN', label: 'HUMANO' },
   ]
 
   const filtered = filter === 'TODOS' ? events : events.filter(e => e.type === filter)
@@ -148,7 +144,7 @@ export default function TerminalCard({ events, onIpClick, paused, onTogglePause 
         ) : (
           <>
             {visible.map((ev, i) => (
-              <TerminalLine key={ev.id ?? `${ev.ts}-${i}`} ev={ev} onIpClick={onIpClick} />
+              <TerminalLine key={ev.id ?? `${ev.ts}-${i}`} ev={ev} />
             ))}
             <div ref={bottomRef} />
           </>

@@ -30,7 +30,7 @@ import {
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
-const ROLE_LABELS = { admin: 'Admin', analista: 'Analista', auditor: 'Auditor', viewer: 'Viewer' }
+const ROLE_LABELS = { admin: 'Admin', viewer: 'Viewer' }
 
 const EMPTY_FORM = { username: '', nombre: '', password: '', role: 'viewer' }
 
@@ -39,7 +39,7 @@ function isEnabled(u) {
 }
 
 export default function Usuarios({ token, role }) {
-  const isReadOnly = role === 'auditor'
+  const isReadOnly = false
   const { t } = useTranslation()
   const [users, setUsers]       = useState([])
   const [loading, setLoading]   = useState(true)
@@ -278,8 +278,6 @@ export default function Usuarios({ token, role }) {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value='viewer'>Viewer</SelectItem>
-                  <SelectItem value='analista'>Analista</SelectItem>
-                  <SelectItem value='auditor'>Auditor</SelectItem>
                   <SelectItem value='admin'>Admin</SelectItem>
                 </SelectContent>
               </Select>
