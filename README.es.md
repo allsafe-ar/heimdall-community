@@ -42,6 +42,24 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 
 ---
 
+## Screenshots
+
+<div align="center">
+
+**Dashboard en tiempo real**
+<br/>
+<img src="screenshots/dashboard-principal.png" alt="Dashboard en tiempo real" width="900"/>
+
+<br/><br/>
+
+**Historial de eventos**
+<br/>
+<img src="screenshots/tabla-de-eventos.png" alt="Tabla de Eventos" width="900"/>
+
+</div>
+
+---
+
 ## Instalación
 
 ### Opción A — Script de instalación (recomendado para servidores Linux)

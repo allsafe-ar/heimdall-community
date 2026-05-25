@@ -42,6 +42,24 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 
 ---
 
+## Screenshots
+
+<div align="center">
+
+**Real-time Dashboard**
+<br/>
+<img src="screenshots/dashboard-principal.png" alt="Real-time Dashboard" width="900"/>
+
+<br/><br/>
+
+**Event History**
+<br/>
+<img src="screenshots/tabla-de-eventos.png" alt="Event Table" width="900"/>
+
+</div>
+
+---
+
 ## Installation
 
 ### Option A — Install script (recommended for Linux servers)
