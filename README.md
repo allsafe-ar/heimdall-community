@@ -3,9 +3,9 @@
 <div align="center">
   <img src="logo.png" alt="Heimdall Logo" width="500"/>
 
-  # Heimdall Community — Web Honeypot Monitor
+  # Heimdall Community - Web Honeypot Monitor
 
-  **Real-time web honeypot platform — free and open source**
+  **Real-time web honeypot platform - free and open source**
 
   *Powered by [AllSafe Security Solutions](https://www.allsafe.com.ar)*
 
@@ -18,9 +18,9 @@
 
 ---
 
-Heimdall Community is a free, open-source web honeypot platform with a real-time dashboard. It deploys fake services (login portals, admin panels, APIs) that log every interaction — brute-force attempts, scanners, bots, and human intruders — while remaining completely invisible to legitimate traffic.
+Heimdall Community is a free, open-source web honeypot platform with a real-time dashboard. It deploys fake services (login portals, admin panels, APIs) that log every interaction - brute-force attempts, scanners, bots, and human intruders - while remaining completely invisible to legitimate traffic.
 
-> The name comes from Heimdall — the Aesir god who guards the Bifrost bridge in Norse mythology. He sees all and hears all, never sleeping.
+> The name comes from Heimdall - the Aesir god who guards the Bifrost bridge in Norse mythology. He sees all and hears all, never sleeping.
 
 ---
 
@@ -28,16 +28,16 @@ Heimdall Community is a free, open-source web honeypot platform with a real-time
 
 Heimdall Community gives your Blue Team full visibility over who is probing your infrastructure:
 
-- **4 honeypot templates** — WordPress, cPanel, CorpNet Portal, Microsoft
-- **HTTP & HTTPS decoys** — Ports 80 and 443 with self-signed certificate support
-- **Threat scoring** — Each event gets a risk classification: BRUTE / SCAN / BOT / RECON / HUMAN
-- **Real-time dashboard** — Live event feed via WebSocket with pause/resume without missing events
-- **IP list** — Aggregated view of attacking IPs with hit counts and geolocation
-- **Event history** — Paginated table with filter by type
-- **Statistics** — Total events, unique IPs, top attackers, attack breakdown by type
-- **Role-based access** — `admin` / `viewer`
-- **User management** — Create, edit, enable/disable users
-- **TOTP 2FA** — RFC 6238, setup via QR code
+- **4 honeypot templates** - WordPress, cPanel, CorpNet Portal, Microsoft
+- **HTTP & HTTPS decoys** - Ports 80 and 443 with self-signed certificate support
+- **Threat scoring** - Each event gets a risk classification: BRUTE / SCAN / BOT / RECON / HUMAN
+- **Real-time dashboard** - Live event feed via WebSocket with pause/resume without missing events
+- **IP list** - Aggregated view of attacking IPs with hit counts and geolocation
+- **Event history** - Paginated table with filter by type
+- **Statistics** - Total events, unique IPs, top attackers, attack breakdown by type
+- **Role-based access** - `admin` / `viewer`
+- **User management** - Create, edit, enable/disable users
+- **TOTP 2FA** - RFC 6238, setup via QR code
 - **Dark / Light / System theme**
 
 ---
@@ -62,7 +62,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 
 ## Installation
 
-### Option A — Install script (recommended for Linux servers)
+### Option A - Install script (recommended for Linux servers)
 
 ```bash
 git clone https://github.com/allsafe-ar/heimdall-community.git
@@ -72,7 +72,7 @@ chmod +x install.sh && sudo ./install.sh
 
 Tested on Ubuntu 22.04 / 24.04 and Debian 12.
 
-### Option B — Docker
+### Option B - Docker
 
 ```bash
 git clone https://github.com/allsafe-ar/heimdall-community.git
@@ -82,7 +82,7 @@ cp backend/.env.example backend/.env
 docker compose up -d
 ```
 
-### Option C — Manual
+### Option C - Manual
 
 ```bash
 # Backend
@@ -98,7 +98,7 @@ npm install
 npm run build   # Production build → dist/
 ```
 
-Default credentials (first run): `admin` / `admin123` — **change immediately**.
+Default credentials (first run): `admin` / `admin123` - **change immediately**.
 
 ---
 
@@ -107,7 +107,7 @@ Default credentials (first run): `admin` / `admin123` — **change immediately**
 ```
 heimdall-community/
 ├── backend/
-│   ├── server.js       # Single-file backend — honeypot engine + REST API + WebSocket
+│   ├── server.js       # Single-file backend - honeypot engine + REST API + WebSocket
 │   ├── templates/      # HTML decoy pages served as honeypots
 │   └── .env.example
 └── frontend-shadcn/
@@ -120,10 +120,10 @@ heimdall-community/
 ### Backend
 
 - Single-file Express server (`server.js`)
-- MySQL 8.0+ — tables auto-created on first start
+- MySQL 8.0+ - tables auto-created on first start
 - JWT authentication (12h expiry), TOTP 2FA, account lockout
 - WebSocket (Socket.IO) for live event streaming
-- Honeypot engine: captures IP, User-Agent, path, method, body — assigns threat score
+- Honeypot engine: captures IP, User-Agent, path, method, body - assigns threat score
 - Rate limiting: 5 failed logins → 15-min lockout; 300 req/15 min per IP
 
 ### Frontend
@@ -139,7 +139,7 @@ heimdall-community/
 
 | Template | Simulates |
 |----------|-----------|
-| `generic` | CorpNet Portal — corporate employee login |
+| `generic` | CorpNet Portal - corporate employee login |
 | `wordpress` | WordPress wp-admin login |
 | `cpanel` | cPanel hosting panel |
 | `microsoft` | Microsoft account login |
@@ -152,10 +152,10 @@ The active template is switchable from the dashboard without restart.
 
 | Type | Description |
 |------|-------------|
-| `BRUTE` | Repeated login attempts — credential stuffing or brute force |
+| `BRUTE` | Repeated login attempts - credential stuffing or brute force |
 | `SCAN` | Path enumeration / vulnerability scanning |
-| `BOT` | Automated bot — scraping or probing |
-| `RECON` | Reconnaissance — info gathering |
+| `BOT` | Automated bot - scraping or probing |
+| `RECON` | Reconnaissance - info gathering |
 | `HUMAN` | Likely manual interaction |
 
 ---
@@ -164,8 +164,8 @@ The active template is switchable from the dashboard without restart.
 
 | Role | Capabilities |
 |------|-------------|
-| `admin` | Full access — users, settings, all events |
-| `viewer` | Dashboard — read-only view of events and stats |
+| `admin` | Full access - users, settings, all events |
+| `viewer` | Dashboard - read-only view of events and stats |
 
 ---
 
@@ -189,7 +189,7 @@ Created by **Eduardo Emiliano Alaniz** ([@h4wkby73](https://github.com/h4wkby73)
 
 ## License
 
-GNU Affero General Public License v3.0 — see [LICENSE](LICENSE) file.
+GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) file.
 
 If you modify and deploy Heimdall Community as a service, you must publish your modifications under the same license.
 
@@ -197,7 +197,7 @@ If you modify and deploy Heimdall Community as a service, you must publish your 
 
 ## Security
 
-Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY.md).
+Found a vulnerability? Please report it privately - see [SECURITY.md](SECURITY.md).
 
 ---
 
