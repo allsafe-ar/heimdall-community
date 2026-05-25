@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* ── AllSafe theme (idéntico a Gjallarhorn/SGSI) ─────────────────────────── */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.99 0.004 264);
+  --foreground: oklch(0.13 0.04 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.04 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.04 264);
+  --primary: oklch(0.535 0.233 22.3);
+  --primary-foreground: oklch(0.98 0.003 0);
+  --secondary: oklch(0.945 0.018 264);
+  --secondary-foreground: oklch(0.50 0.22 264);
+  --muted: oklch(0.945 0.018 264);
+  --muted-foreground: oklch(0.52 0.06 264);
+  --accent: oklch(0.935 0.025 264);
+  --accent-foreground: oklch(0.30 0.12 264);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.90 0.022 264);
+  --input: oklch(0.90 0.022 264);
+  --ring: oklch(0.535 0.233 22.3);
+  --sidebar: oklch(0.96 0.015 264);
+  --sidebar-foreground: oklch(0.13 0.04 264);
+  --sidebar-primary: oklch(0.535 0.233 22.3);
+  --sidebar-primary-foreground: oklch(0.98 0.003 0);
+  --sidebar-accent: oklch(0.91 0.03 264);
+  --sidebar-accent-foreground: oklch(0.30 0.12 264);
+  --sidebar-border: oklch(0.88 0.025 264);
+  --sidebar-ring: oklch(0.535 0.233 22.3);
+}
+
+.dark {
+  --background: oklch(0.097 0.022 264);
+  --foreground: oklch(0.96 0.005 250);
+  --card: oklch(0.112 0.022 264);
+  --card-foreground: oklch(0.96 0.005 250);
+  --popover: oklch(0.14 0.025 264);
+  --popover-foreground: oklch(0.96 0.005 250);
+  --primary: oklch(0.535 0.233 22.3);
+  --primary-foreground: oklch(0.98 0.003 0);
+  --secondary: oklch(0.19 0.028 264);
+  --secondary-foreground: oklch(0.96 0.005 250);
+  --muted: oklch(0.19 0.028 264);
+  --muted-foreground: oklch(0.58 0.035 260);
+  --accent: oklch(0.19 0.028 264);
+  --accent-foreground: oklch(0.96 0.005 250);
+  --destructive: oklch(0.535 0.233 22.3);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.535 0.233 22.3);
+  --sidebar: oklch(0.112 0.022 264);
+  --sidebar-foreground: oklch(0.96 0.005 250);
+  --sidebar-primary: oklch(0.535 0.233 22.3);
+  --sidebar-primary-foreground: oklch(0.98 0.003 0);
+  --sidebar-accent: oklch(0.19 0.028 264);
+  --sidebar-accent-foreground: oklch(0.96 0.005 250);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.535 0.233 22.3);
+}
+
+@theme inline {
+  --font-inter: 'Inter', 'sans-serif';
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  html {
+    @apply overflow-x-hidden;
+    font-size: 20px;
+  }
+  body {
+    @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body[data-scroll-locked] {
+    overflow: unset !important;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Heimdall-specific utilities ─────────────────────────────────────────── */
+@utility font-terminal {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.7rem;
+}
+
+@utility data-table {
+  font-size: 0.78rem;
+}
+
+/* Collapsible sidebar animation */
+.CollapsibleContent {
+  overflow: hidden;
+}
+.CollapsibleContent[data-state='open'] {
+  animation: slideDown 300ms ease-out;
+}
+.CollapsibleContent[data-state='closed'] {
+  animation: slideUp 300ms ease-out;
+}
+
+@keyframes slideDown {
+  from { height: 0; }
+  to   { height: var(--radix-collapsible-content-height); }
+}
+@keyframes slideUp {
+  from { height: var(--radix-collapsible-content-height); }
+  to   { height: 0; }
+}
+
+/* Terminal scrollbar */
+.terminal-scroll::-webkit-scrollbar { width: 4px; }
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 20%);
+  border-radius: 4px;
+}
+
+/* Flash animation for new events */
+@keyframes flash-border {
+  0%   { border-color: rgba(220,38,38,0.7); }
+  100% { border-color: transparent; }
+}
+.flash-new { animation: flash-border 1.5s ease-out forwards; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.animate-blink { animation: blink 1s step-end infinite; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.2s ease-out; }
+
+/* ── Autofill del browser (Chrome/Edge pone fondo verde/amarillo por defecto) ── */
+/* IMPORTANTE: usar var(--card) (opaco) — var(--input) es semi-transparente y no funciona
+   con -webkit-box-shadow inset. hsl(var(--x)) es inválido en Tailwind v4 (las vars ya son oklch). */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important;
+  box-shadow:         0 0 0 1000px var(--card) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
+}

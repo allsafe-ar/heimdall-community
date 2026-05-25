@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllSafe Heimdall</title>
+  <link rel="icon" type="image/png" href="/heimdall/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Inicialización síncrona del tema oscuro — DEBE ejecutarse antes del primer render de React.
+         Sin este script, ThemeProvider aplica la clase .dark en useEffect (post-render)
+         causando FOUC: un flash de bordes claros sobre fondo oscuro al iniciar sesión. -->
+    <script>
+      (function () {
+        try {
+          var t = document.cookie.match(/vite-ui-theme=([^;]+)/)?.[1] || 'system'
+          if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+          }
+        } catch (e) {}
+      })()
+    </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

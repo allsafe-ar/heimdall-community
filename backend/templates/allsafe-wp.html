@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acceder &lsaquo; AllSafe Security Solutions &#8212; WordPress</title>
+<link rel="icon" type="image/png" href="/assets/sgsi-favicon.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #f1f1f1; }
+  body { background: #f1f1f1; color: #444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 13px; line-height: 1.5; }
+  #login { width: 340px; padding: 7% 0 0; margin: auto; }
+
+  /* Logo */
+  #login h1 { text-align: center; margin-bottom: 28px; }
+  #login h1 a { display: inline-block; text-decoration: none; }
+  #login h1 img { height: 80px; width: auto; }
+
+  /* Message box */
+  .message {
+    background: #fff;
+    border-left: 4px solid #72aee6;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #1d2327;
+  }
+
+  /* Error box */
+  #login_error {
+    background: #fff;
+    border: 1px solid #8c8f94;
+    border-left: 4px solid #dc3232;
+    border-radius: 4px;
+    margin: 0 0 24px;
+    padding: 12px 16px;
+    font-size: 14px;
+    display: none;
+  }
+
+  /* Form card */
+  .login form {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 26px 24px;
+  }
+
+  /* Labels */
+  .login label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #50575e;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* Inputs */
+  .login input[type=text],
+  .login input[type=password] {
+    background-color: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    color: #2c3338;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 8px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .login input[type=text]:focus,
+  .login input[type=password]:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+  }
+
+  .field { margin-bottom: 16px; }
+
+  /* Password wrap with eye */
+  .wp-pwd { position: relative; }
+  .wp-pwd input[type=password] { padding-right: 44px; }
+  .eye-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #2271b1;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    outline: none;
+  }
+  .eye-btn:hover { color: #135e96; }
+
+  /* Recuérdame + submit row */
+  .submit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  .forgetmenot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #50575e;
+  }
+  .forgetmenot input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+
+  /* Submit button */
+  #wp-submit {
+    background: #2271b1;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    height: 36px;
+    padding: 0 20px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  #wp-submit:hover { background: #135e96; }
+  #wp-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+  /* Nav links */
+  .login #nav { margin: 20px 0 0; padding: 0 4px; }
+  .login #nav a {
+    display: block;
+    text-decoration: none;
+    color: #2271b1;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .login #nav a:hover { text-decoration: underline; }
+
+  /* Language selector */
+  .language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 0 4px;
+  }
+  .language-switcher svg { color: #50575e; flex-shrink: 0; }
+  .language-switcher select {
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background: #fff;
+    color: #2c3338;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 4px 8px;
+    outline: none;
+    flex: 1;
+  }
+  .language-switcher button {
+    background: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    color: #2c3338;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .language-switcher button:hover { background: #f6f7f7; }
+
+  .spinner-inline {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="login wp-core-ui">
+<div id="login">
+  <h1>
+    <a href="#" tabindex="-1">
+      <img src="/assets/allsafe-logo.png" alt="AllSafe Security Solutions">
+    </a>
+  </h1>
+
+  <div id="login_error">
+    <strong>Error</strong>: El nombre de usuario o la contraseña que ingresaste es incorrecta. <a href="#">¿Has olvidado tu contraseña?</a>
+  </div>
+
+  <p class="message">Ahora estás desconectado.</p>
+
+  <form name="loginform" id="loginform" method="post" class="login">
+    <div class="field">
+      <label for="user_login">Nombre de usuario o correo electrónico</label>
+      <input type="text" name="log" id="user_login" autocapitalize="off" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="user_pass">Contraseña</label>
+      <div class="wp-pwd">
+        <input type="password" name="pwd" id="user_pass" autocomplete="current-password" required>
+        <button type="button" class="eye-btn" id="eye" aria-label="Mostrar contraseña">
+          <svg id="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="eye-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="submit-row">
+      <p class="forgetmenot">
+        <input name="rememberme" type="checkbox" id="rememberme" value="forever">
+        <label for="rememberme" style="font-weight:400;color:#50575e">Recuérdame</label>
+      </p>
+      <input type="submit" name="wp-submit" id="wp-submit" value="Acceder">
+    </div>
+  </form>
+
+  <div id="nav">
+    <a href="#">¿Has olvidado tu contraseña?</a>
+    <a href="#">← Ir a AllSafe Security Solutions</a>
+  </div>
+
+  <div class="language-switcher">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <select>
+      <option>Español</option>
+    </select>
+    <button type="button">Cambiar</button>
+  </div>
+</div>
+
+<script>
+document.getElementById('eye').addEventListener('click', () => {
+  const p = document.getElementById('user_pass');
+  const open = document.getElementById('eye-open');
+  const close = document.getElementById('eye-close');
+  if (p.type === 'password') {
+    p.type = 'text';
+    open.style.display = 'none';
+    close.style.display = '';
+  } else {
+    p.type = 'password';
+    open.style.display = '';
+    close.style.display = 'none';
+  }
+});
+
+document.getElementById('loginform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('wp-submit');
+  const err = document.getElementById('login_error');
+  err.style.display = 'none';
+  btn.value = 'Accediendo...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('user_login').value,
+        password: document.getElementById('user_pass').value
+      })
+    });
+    if (!r.ok) err.style.display = 'block';
+  } catch {
+    err.style.display = 'block';
+  }
+  btn.value = 'Acceder';
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Heimdall Community — Docker Compose
+# Copyright (c) 2026 Eduardo Emiliano Alaniz - AllSafe Security Solutions
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: heimdall_db
+      MYSQL_USER: heimdall
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
+    volumes:
+      - heimdall_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3005}:3005"
+    environment:
+      PORT: 3005
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: heimdall
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_NAME: heimdall_db
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_random_64char_string}
+      NODE_ENV: production
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3005}
+      TRAP_PORTS: ${TRAP_PORTS:-21,23,25,110,143,3306,5432,6379,27017,8080,8443}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - heimdall_uploads:/app/uploads
+
+volumes:
+  heimdall_db:
+  heimdall_uploads:
