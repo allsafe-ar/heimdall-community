@@ -15,7 +15,7 @@
   ![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)
   ![Version](https://img.shields.io/badge/Version-Community-blue?style=flat-square)
 
-  [![Website](https://img.shields.io/badge/Website-allsafe.com.ar%2Fheimdall--community-f5a623?style=for-the-badge&labelColor=1e324d)](https://allsafe.com.ar/heimdall-community/)
+  [![Website](https://img.shields.io/badge/Website-allsafe.com.ar%2Fen%2Fheimdall--community-f5a623?style=for-the-badge&labelColor=1e324d)](https://allsafe.com.ar/en/heimdall-community/)
 </div>
 
 ---
