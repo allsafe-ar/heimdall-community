@@ -56,12 +56,12 @@ Credenciales por defecto: `admin` / `admin123` — **cambiar inmediatamente**.
 
 ## Funcionalidades
 
-- Templates de honeypot: WordPress, cPanel, Portal Corporativo, Login genérico
-- Scoring de amenazas: BRUTE / SCAN / BOT / PORTSCAN / RECON / HUMAN
+- Templates de honeypot: WordPress, cPanel, Portal Corporativo, Microsoft
+- Scoring de amenazas: BRUTE / SCAN / BOT / RECON / HUMAN
 - Dashboard en tiempo real via WebSocket
-- Perfil de IP con línea de tiempo de ataques
-- Roles: admin / analista / auditor / viewer
-- TOTP 2FA, lockout de cuentas, audit log
+- Lista de IPs atacantes con geolocalización
+- Roles: admin / viewer
+- TOTP 2FA, lockout de cuentas
 
 ---
 

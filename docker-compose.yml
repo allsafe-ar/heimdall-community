@@ -33,7 +33,6 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change_this_to_a_random_64char_string}
       NODE_ENV: production
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3005}
-      TRAP_PORTS: ${TRAP_PORTS:-21,23,25,110,143,3306,5432,6379,27017,8080,8443}
     depends_on:
       db:
         condition: service_healthy

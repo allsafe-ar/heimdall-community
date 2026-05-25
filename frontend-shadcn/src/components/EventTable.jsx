@@ -5,16 +5,15 @@ import { getMeta, fmtDateTime } from '../lib/utils'
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const PAGE_SIZE = 50
 
-export default function EventTable({ token, onIpClick, refreshTick }) {
+export default function EventTable({ token, refreshTick }) {
   const { t } = useTranslation()
 
   const TYPES = [
-    { value: '',        label: t('events.filter_all') },
-    { value: 'BRUTE',  label: 'BRUTE'    },
-    { value: 'PORTSCAN',label: 'PORTSCAN' },
-    { value: 'SCAN',   label: 'SCAN'     },
-    { value: 'BOT',    label: 'BOT'      },
-    { value: 'RECON',  label: 'RECON'    },
+    { value: '',       label: t('events.filter_all') },
+    { value: 'BRUTE',  label: 'BRUTE'   },
+    { value: 'SCAN',   label: 'SCAN'    },
+    { value: 'BOT',    label: 'BOT'     },
+    { value: 'RECON',  label: 'RECON'   },
     { value: 'HUMAN',  label: t('events.human') },
   ]
   const [events, setEvents] = useState([])
@@ -127,12 +126,9 @@ export default function EventTable({ token, onIpClick, refreshTick }) {
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <button
-                      onClick={() => onIpClick(ev.ip)}
-                      className="font-terminal text-xs text-zinc-300 hover:text-white hover:underline underline-offset-2 transition-colors"
-                    >
+                    <span className="font-terminal text-xs text-zinc-300">
                       {ev.ip}
-                    </button>
+                    </span>
                   </td>
                   <td className="px-4 py-2.5 text-zinc-500 text-xs whitespace-nowrap">
                     {ev.flag && <span className="mr-1">{ev.flag}</span>}

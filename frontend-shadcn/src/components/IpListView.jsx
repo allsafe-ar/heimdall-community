@@ -5,13 +5,12 @@ const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const PAGE_SIZE = 50
 
 const TYPE_FILTERS = [
-  { value: '',        label: 'Todos los tipos' },
-  { value: 'BRUTE',   label: 'BRUTE'   },
-  { value: 'PORTSCAN',label: 'PORTSCAN'},
-  { value: 'SCAN',    label: 'SCAN'    },
-  { value: 'BOT',     label: 'BOT'     },
-  { value: 'RECON',   label: 'RECON'   },
-  { value: 'HUMAN',   label: 'HUMANO'  },
+  { value: '',      label: 'Todos los tipos' },
+  { value: 'BRUTE', label: 'BRUTE'   },
+  { value: 'SCAN',  label: 'SCAN'    },
+  { value: 'BOT',   label: 'BOT'     },
+  { value: 'RECON', label: 'RECON'   },
+  { value: 'HUMAN', label: 'HUMANO'  },
 ]
 
 const SORT_OPTIONS = [
@@ -20,7 +19,7 @@ const SORT_OPTIONS = [
   { value: 'first_seen', label: 'Más antigua'  },
 ]
 
-export default function IpListView({ token, onIpClick }) {
+export default function IpListView({ token }) {
   const [ips, setIps]             = useState([])
   const [total, setTotal]         = useState(0)
   const [page, setPage]           = useState(0)
@@ -127,12 +126,9 @@ export default function IpListView({ token, onIpClick }) {
                 className="border-b border-border hover:bg-muted/30 transition-colors"
               >
                 <td className="px-4 py-2.5">
-                  <button
-                    onClick={() => onIpClick(row.ip)}
-                    className="font-terminal text-sm text-zinc-200 hover:text-white hover:underline underline-offset-2 transition-colors"
-                  >
+                  <span className="font-terminal text-sm text-zinc-200">
                     {row.ip}
-                  </button>
+                  </span>
                 </td>
                 <td className="px-4 py-2.5 text-zinc-400 text-xs whitespace-nowrap">
                   <span className="mr-1">{row.flag}</span>

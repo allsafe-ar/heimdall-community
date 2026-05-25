@@ -28,17 +28,16 @@ Heimdall Community is a free, open-source web honeypot platform with a real-time
 
 Heimdall Community gives your Blue Team full visibility over who is probing your infrastructure:
 
-- **Multiple honeypot templates** — WordPress, cPanel, CorpNet Portal, Generic login and more
+- **4 honeypot templates** — WordPress, cPanel, CorpNet Portal, Microsoft
 - **HTTP & HTTPS decoys** — Ports 80 and 443 with self-signed certificate support
-- **Threat scoring** — Each event gets a risk classification: BRUTE / SCAN / BOT / PORTSCAN / RECON / HUMAN
+- **Threat scoring** — Each event gets a risk classification: BRUTE / SCAN / BOT / RECON / HUMAN
 - **Real-time dashboard** — Live event feed via WebSocket with pause/resume without missing events
-- **IP profiler** — Per-IP attack timeline, threat level and geolocation
-- **Event history** — Paginated table with filter and export
+- **IP list** — Aggregated view of attacking IPs with hit counts and geolocation
+- **Event history** — Paginated table with filter by type
 - **Statistics** — Total events, unique IPs, top attackers, attack breakdown by type
-- **Role-based access** — `admin` / `analista` / `auditor` / `viewer`
-- **User management** — Create, edit, enable/disable users; full audit log
+- **Role-based access** — `admin` / `viewer`
+- **User management** — Create, edit, enable/disable users
 - **TOTP 2FA** — RFC 6238, setup via QR code
-- **Custom branding** — Upload organization logo
 - **Dark / Light / System theme**
 
 ---
@@ -122,10 +121,10 @@ heimdall-community/
 
 | Template | Simulates |
 |----------|-----------|
-| `generic` | Generic login portal |
-| `wordpress` | WordPress wp-admin |
-| `cpanel` | cPanel login |
-| `corpnet` | CorpNet Portal |
+| `generic` | CorpNet Portal — corporate employee login |
+| `wordpress` | WordPress wp-admin login |
+| `cpanel` | cPanel hosting panel |
+| `microsoft` | Microsoft account login |
 
 The active template is switchable from the dashboard without restart.
 
@@ -138,7 +137,6 @@ The active template is switchable from the dashboard without restart.
 | `BRUTE` | Repeated login attempts — credential stuffing or brute force |
 | `SCAN` | Path enumeration / vulnerability scanning |
 | `BOT` | Automated bot — scraping or probing |
-| `PORTSCAN` | Port or service discovery |
 | `RECON` | Reconnaissance — info gathering |
 | `HUMAN` | Likely manual interaction |
 
@@ -149,9 +147,7 @@ The active template is switchable from the dashboard without restart.
 | Role | Capabilities |
 |------|-------------|
 | `admin` | Full access — users, settings, all events |
-| `analista` | View events, IP profiler, export |
-| `auditor` | Read-only access to events and stats |
-| `viewer` | Dashboard only |
+| `viewer` | Dashboard — read-only view of events and stats |
 
 ---
 

@@ -12,7 +12,6 @@ import { NavGroup } from './nav-group'
 import { NavSenualos } from './nav-senualos'
 import { NavUser } from './nav-user'
 import { BarChart2, Zap, ClipboardList, Globe } from 'lucide-react'
-import type { CustomTemplate } from '@/lib/templates'
 
 interface Props {
   token: string
@@ -20,12 +19,10 @@ interface Props {
   onTabChange: (tab: string) => void
   activeTemplate: string
   onTemplateChange: (tpl: string) => void
-  pinnedTemplates: string[]
-  customTemplates: CustomTemplate[]
   role?: string
 }
 
-export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplateChange, pinnedTemplates, customTemplates, role }: Props) {
+export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplateChange, role }: Props) {
   const { collapsible, variant } = useLayout()
   const { t } = useTranslation()
 
@@ -53,9 +50,6 @@ export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplate
         <NavSenualos
           tab={tab}
           activeTemplate={activeTemplate}
-          pinnedTemplates={pinnedTemplates}
-          customTemplates={customTemplates}
-          onGoSenualos={() => onTabChange('senualos')}
           onTemplateChange={onTemplateChange}
           role={role}
         />

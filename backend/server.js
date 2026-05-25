@@ -9,7 +9,6 @@ const express    = require("express");
 const http       = require("http");
 const https      = require("https");
 const { Server } = require("socket.io");
-const net        = require("net");
 const path       = require("path");
 const fs         = require("fs");
 const mysql      = require("mysql2/promise");
@@ -28,8 +27,6 @@ const DB_USER     = process.env.DB_USER              || "heimdall";
 const DB_PASS     = process.env.DB_PASSWORD          || "";
 const DB_NAME     = process.env.DB_NAME              || "heimdall_db";
 const CORS_ORIGIN = process.env.CORS_ORIGIN          || (process.env.NODE_ENV === "production" ? false : "http://localhost:5180");
-const TRAP_PORTS  = (process.env.TRAP_PORTS || "21,22,23,25,110,143,3306,5432,6379,27017,8080,8443")
-  .split(",").map(Number).filter(Boolean);
 
 if (!JWT_SECRET || JWT_SECRET === "CHANGE_IN_PRODUCTION" || JWT_SECRET.length < 16) {
   console.error("[Heimdall] FATAL: JWT_SECRET no configurado en .env");
@@ -104,58 +101,6 @@ function threatScore(type) {
   return { BRUTE: 80, PORTSCAN: 70, SCAN: 55, BOT: 40, RECON: 20, HUMAN: 30 }[type] ?? 10;
 }
 
-// ─── TCP tool fingerprinting ───────────────────────────────────────────────────
-const TCP_BANNERS = {
-  22:   "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6\r\n",
-  21:   "220 (vsFTPd 3.0.5)\r\n",
-  23:   "\xff\xfd\x18\xff\xfd\x20\xff\xfd\x23\xff\xfd\x27",
-  25:   "220 mail.srv ESMTP Postfix (Ubuntu)\r\n",
-  3306: "\x4a\x00\x00\x00\x0a\x38\x2e\x30\x2e\x33\x32\x00",
-};
-
-function detectTcpTool(buf, port) {
-  if (!buf || buf.length === 0) return `nmap -sT :${port}`;
-  const s = buf.slice(0, 200).toString("utf8").toLowerCase();
-  if (s.includes("nmap"))                          return `nmap (NSE) :${port}`;
-  if (s.includes("masscan"))                       return `masscan :${port}`;
-  if (s.includes("zgrab"))                         return `zgrab :${port}`;
-  if (s.includes("zmap"))                          return `zmap :${port}`;
-  if (/^(get|head|post|options|put) /i.test(s))   return `HTTP probe :${port}`;
-  if (s.startsWith("ssh-"))                        return `SSH client :${port}`;
-  if (s.startsWith("user "))                       return `FTP client :${port}`;
-  if (s.startsWith("ehlo") || s.startsWith("helo")) return `SMTP client :${port}`;
-  if (s.startsWith("quit") || s.startsWith("exit")) return `scanner :${port}`;
-  return `TCP probe :${port} (${buf.length}B)`;
-}
-
-// ─── Port scan tracker ────────────────────────────────────────────────────────
-const portHits    = new Map();
-const SCAN_WINDOW = 10_000;
-const SCAN_THRESH = 3;
-
-// Limpiar entradas expiradas del portHits Map cada 60 segundos
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, hits] of portHits) {
-    const alive = hits.filter(h => now - h.ts < SCAN_WINDOW);
-    if (alive.length === 0) portHits.delete(ip);
-    else portHits.set(ip, alive);
-  }
-}, 60_000);
-
-function trackPort(ip, port) {
-  const now  = Date.now();
-  const hits = (portHits.get(ip) || []).filter(h => now - h.ts < SCAN_WINDOW);
-  if (!hits.find(h => h.port === port)) hits.push({ port, ts: now });
-  portHits.set(ip, hits);
-  if (hits.length >= SCAN_THRESH) {
-    const ports = hits.map(h => h.port).join(", ");
-    portHits.delete(ip);
-    return ports;
-  }
-  return null;
-}
-
 // ─── Express + Socket.io ──────────────────────────────────────────────────────
 const app    = express();
 const server = http.createServer(app);
@@ -182,158 +127,13 @@ io.use((socket, next) => {
 });
 
 // ─── Templates ────────────────────────────────────────────────────────────────
-const TEMPLATES   = ["sgsi", "gjallarhorn", "crm", "arp", "gungnir", "generic", "wordpress", "cpanel", "allsafe-wp", "heimdall", "anzuelo", "google", "microsoft"];
-let activeTemplate = "sgsi";
+const TEMPLATES   = ["generic", "wordpress", "cpanel", "microsoft"];
+let activeTemplate = "generic";
 
 function serveTemplate(res, name) {
   const file = path.join(__dirname, "templates", `${name}.html`);
   if (fs.existsSync(file)) return res.sendFile(file);
   res.send(`<html><body style="background:#111;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><h2>Login</h2></body></html>`);
-}
-
-// ─── Custom Templates ─────────────────────────────────────────────────────────
-const CUSTOM_TPL_FILE = path.join(__dirname, "custom-templates.json");
-let customTemplates = [];
-
-(function loadCustomTemplates() {
-  try {
-    if (fs.existsSync(CUSTOM_TPL_FILE)) {
-      const data = JSON.parse(fs.readFileSync(CUSTOM_TPL_FILE, "utf8"));
-      if (Array.isArray(data)) {
-        customTemplates = data;
-        data.forEach(t => { if (t.id && !TEMPLATES.includes(t.id)) TEMPLATES.push(t.id); });
-      }
-    }
-  } catch (e) { console.warn("[Heimdall] custom-templates.json:", e.message); }
-})();
-
-function saveCustomTemplates() {
-  const toSave = customTemplates.map(({ id, name, subtitle, userLabel, btnText, footerText, color }) =>
-    ({ id, name, subtitle, userLabel, btnText, footerText, color }));
-  fs.writeFileSync(CUSTOM_TPL_FILE, JSON.stringify(toSave, null, 2));
-}
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function slugify(s) {
-  return s.toLowerCase()
-    .replace(/[áàäâ]/g,"a").replace(/[éèëê]/g,"e")
-    .replace(/[íìïî]/g,"i").replace(/[óòöô]/g,"o")
-    .replace(/[úùüû]/g,"u").replace(/ñ/g,"n")
-    .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-}
-
-function buildCustomHtml({ name, subtitle, userLabel, btnText, footerText, color, logoData }) {
-  const logoSrc = logoData || "/assets/allsafe-logo.png";
-  const c = /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "#e53e3e";
-  const btn = escHtml(btnText || "Iniciar sesión");
-  return `<!DOCTYPE html>
-<html lang="es" class="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escHtml(name)}</title>
-<link rel="icon" type="image/png" href="/assets/sgsi-favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-<style>
-:root { --primary: ${c}; }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:20px;color-scheme:dark}
-body{background:oklch(0.097 0.022 264);color:oklch(0.96 0.005 250);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100svh;display:flex;align-items:center;justify-content:center;padding:1rem;-webkit-font-smoothing:antialiased}
-.wrap{width:100%;max-width:28rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:0 1rem}
-.logo-area{display:flex;flex-direction:column;align-items:center;gap:0.75rem}
-.logo-area img{height:4rem;width:auto}
-.logo-area h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.025em;color:oklch(0.96 0.005 250);text-align:center}
-.logo-area p{font-size:0.875rem;color:oklch(0.58 0.035 260);text-align:center}
-.card{width:100%;background:oklch(0.112 0.022 264);border:1px solid oklch(1 0 0/9%);border-radius:0.625rem;padding:1.5rem}
-.form-grid{display:grid;gap:0.75rem}
-.field{display:flex;flex-direction:column;gap:0.375rem}
-label{font-size:0.875rem;font-weight:500;color:oklch(0.96 0.005 250);line-height:1.25rem}
-.input-wrap{position:relative}
-input[type=text],input[type=password]{width:100%;background:oklch(1 0 0/12%);border:1px solid oklch(1 0 0/12%);border-radius:calc(0.625rem - 2px);padding:0.5rem 0.75rem;color:oklch(0.96 0.005 250);font-size:0.875rem;font-family:inherit;outline:none;line-height:1.25rem;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
-input[type=password]{padding-right:2.5rem}
-input::placeholder{color:oklch(0.58 0.035 260)}
-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 20%,transparent)}
-.eye-btn{position:absolute;right:0.625rem;top:50%;transform:translateY(-50%);background:none;border:none;color:oklch(0.58 0.035 260);cursor:pointer;padding:0.25rem;display:flex;align-items:center;transition:color .15s;outline:none}
-.eye-btn:hover{color:oklch(0.96 0.005 250)}
-.toast{display:none;align-items:center;gap:0.5rem;background:oklch(0.19 0.028 264);border:1px solid oklch(1 0 0/9%);border-radius:0.5rem;padding:0.75rem 1rem;font-size:0.875rem;color:oklch(0.96 0.005 250);width:100%;margin-bottom:0.75rem}
-.toast svg{color:var(--primary);flex-shrink:0}
-.btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:calc(0.625rem - 2px);padding:0.5rem 1rem;height:2.25rem;font-size:0.875rem;font-weight:500;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;transition:opacity .15s;margin-top:0.25rem;white-space:nowrap;-webkit-font-smoothing:antialiased}
-.btn:hover{opacity:0.85}
-.btn:disabled{opacity:0.5;cursor:not-allowed;pointer-events:none}
-.forgot{display:block;text-align:center;font-size:0.75rem;color:oklch(0.58 0.035 260);margin-top:0.75rem;cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;text-underline-offset:0.2em;transition:color .15s;width:100%}
-.forgot:hover{color:oklch(0.96 0.005 250)}
-.footer{font-size:0.75rem;color:oklch(0.30 0.02 264);text-align:center}
-.spinner{width:0.875rem;height:0.875rem;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="logo-area">
-    <img src="${escHtml(logoSrc)}" alt="${escHtml(name)}">
-    <div>
-      <h1>${escHtml(name)}</h1>
-      <p>${escHtml(subtitle)}</p>
-    </div>
-  </div>
-  <div class="card" style="width:100%">
-    <div class="toast" id="toast">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>Usuario o contraseña incorrectos.</span>
-    </div>
-    <form id="form" class="form-grid">
-      <div class="field">
-        <label for="u">${escHtml(userLabel || "Usuario")}</label>
-        <input type="text" id="u" name="username" autocomplete="username" placeholder="usuario" required>
-      </div>
-      <div class="field">
-        <label for="p">Contraseña</label>
-        <div class="input-wrap">
-          <input type="password" id="p" name="password" autocomplete="current-password" placeholder="••••••••" required>
-          <button type="button" class="eye-btn" id="eye" aria-label="Mostrar contraseña" tabindex="-1">
-            <svg id="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg id="eye-close" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          </button>
-        </div>
-      </div>
-      <button class="btn" type="submit" id="btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        ${btn}
-      </button>
-    </form>
-    <button class="forgot" type="button">¿Olvidaste tu contraseña?</button>
-  </div>
-  <p class="footer">${escHtml(footerText || "AllSafe Security Solutions")}</p>
-</div>
-<script>
-document.getElementById('eye').addEventListener('click',()=>{
-  const p=document.getElementById('p'),o=document.getElementById('eye-open'),c=document.getElementById('eye-close');
-  if(p.type==='password'){p.type='text';o.style.display='none';c.style.display='';}
-  else{p.type='password';o.style.display='';c.style.display='none';}
-});
-document.getElementById('form').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const btn=document.getElementById('btn'),toast=document.getElementById('toast');
-  toast.style.display='none';
-  btn.innerHTML='<div class="spinner"></div>';btn.disabled=true;
-  try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({username:document.getElementById('u').value,password:document.getElementById('p').value})});
-    if(!r.ok)toast.style.display='flex';
-  }catch{toast.style.display='flex';}
-  btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> ${btn}';
-  btn.disabled=false;
-});
-</script>
-</body>
-</html>`;
 }
 
 // ─── Event logging + broadcast ────────────────────────────────────────────────
@@ -424,18 +224,6 @@ const authDash = async (req, res, next) => {
 
 const authAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Acceso denegado" });
-  next();
-};
-
-// admin + analista (operativa del honeypot — plantillas, settings)
-const authAnalista = (req, res, next) => {
-  if (!["admin", "analista"].includes(req.user?.role)) return res.status(403).json({ error: "Acceso denegado" });
-  next();
-};
-
-// admin + auditor (audit log + lista de usuarios read-only)
-const authAuditor = (req, res, next) => {
-  if (!["admin", "auditor"].includes(req.user?.role)) return res.status(403).json({ error: "Acceso denegado" });
   next();
 };
 
@@ -578,26 +366,7 @@ app.get("/heimdall/api/ips", authDash, async (req, res) => {
   res.json({ ips, total: Number(total) });
 });
 
-app.get("/heimdall/api/ip/:ip", authDash, async (req, res) => {
-  const ip = req.params.ip;
-  const events    = await qRows("SELECT * FROM events WHERE ip = ? ORDER BY id DESC LIMIT 200", [ip]);
-  const [[agg]]   = await db.execute(
-    "SELECT COUNT(*) AS total, MIN(ts) AS first_seen, MAX(ts) AS last_seen FROM events WHERE ip = ?", [ip]
-  );
-  const [creds]   = await db.execute(
-    "SELECT detail, COUNT(*) AS c FROM events WHERE ip = ? AND type = 'BRUTE' GROUP BY detail ORDER BY c DESC LIMIT 20", [ip]
-  );
-  const [paths]   = await db.execute(
-    "SELECT path, COUNT(*) AS c FROM events WHERE ip = ? GROUP BY path ORDER BY c DESC LIMIT 20", [ip]
-  );
-  const [types]   = await db.execute(
-    "SELECT type, COUNT(*) AS c FROM events WHERE ip = ? GROUP BY type", [ip]
-  );
-  const geo = geoLookup(ip);
-  res.json({ ip, ...geo, flag: flag(geo.country), ...agg, events, top_credentials: creds, top_paths: paths, by_type: types });
-});
-
-app.get("/heimdall/api/template", authDash, authAnalista, (req, res) => {
+app.get("/heimdall/api/template", authDash, (req, res) => {
   res.json({ template: activeTemplate, templates: TEMPLATES });
 });
 
@@ -608,68 +377,6 @@ app.post("/heimdall/api/template", authDash, authAdmin, (req, res) => {
   io.emit("template_changed", { template });
   console.log(`[Heimdall] Template cambiado → ${template}`);
   res.json({ ok: true, template });
-});
-
-// ─── Custom Template Endpoints ────────────────────────────────────────────────
-app.get("/heimdall/api/templates/custom", authDash, authAnalista, (req, res) => {
-  res.json({ templates: customTemplates });
-});
-
-app.post("/heimdall/api/templates/custom", authDash, authAdmin, async (req, res) => {
-  const { name, subtitle, userLabel, btnText, footerText, color, logoData } = req.body || {};
-  if (!name?.trim() || !subtitle?.trim()) return res.status(400).json({ error: "Nombre y subtítulo requeridos" });
-
-  const slug = slugify(name.trim());
-  if (!slug) return res.status(400).json({ error: "Nombre inválido" });
-  const id = `custom-${slug}`;
-
-  const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "#e53e3e";
-  const SAFE_IMG_PREFIXES = ["data:image/png;", "data:image/jpeg;", "data:image/jpg;", "data:image/gif;", "data:image/webp;"];
-  let safeLogoData = null;
-  if (logoData && typeof logoData === "string" && SAFE_IMG_PREFIXES.some(p => logoData.startsWith(p)) && logoData.length < 2 * 1024 * 1024) {
-    safeLogoData = logoData;
-  }
-
-  const tpl = {
-    id,
-    name:       name.trim().slice(0, 100),
-    subtitle:   subtitle.trim().slice(0, 200),
-    userLabel:  (userLabel || "Usuario").trim().slice(0, 50),
-    btnText:    (btnText   || "Iniciar sesión").trim().slice(0, 50),
-    footerText: (footerText || "AllSafe Security Solutions").trim().slice(0, 200),
-    color:      safeColor,
-    logoData:   safeLogoData,
-  };
-
-  const html = buildCustomHtml(tpl);
-  fs.writeFileSync(path.join(__dirname, "templates", `${id}.html`), html, "utf8");
-
-  const { logoData: _ld, ...meta } = tpl;
-  const idx = customTemplates.findIndex(t => t.id === id);
-  if (idx >= 0) customTemplates[idx] = meta;
-  else customTemplates.push(meta);
-
-  if (!TEMPLATES.includes(id)) TEMPLATES.push(id);
-  saveCustomTemplates();
-  await logAudit(req.user.id, "template_created", `Señuelo personalizado: ${id}`);
-  res.json({ ok: true, id, name: tpl.name });
-});
-
-app.delete("/heimdall/api/templates/custom/:id", authDash, authAdmin, async (req, res) => {
-  const id = req.params.id;
-  if (!id.startsWith("custom-")) return res.status(400).json({ error: "Solo se pueden eliminar señuelos personalizados" });
-  const idx = customTemplates.findIndex(t => t.id === id);
-  if (idx < 0) return res.status(404).json({ error: "Señuelo no encontrado" });
-
-  customTemplates.splice(idx, 1);
-  const tplIdx = TEMPLATES.indexOf(id);
-  if (tplIdx >= 0) TEMPLATES.splice(tplIdx, 1);
-  if (activeTemplate === id) activeTemplate = "sgsi";
-
-  try { const fp = path.join(__dirname, "templates", `${id}.html`); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch {}
-  saveCustomTemplates();
-  await logAudit(req.user.id, "template_deleted", `Señuelo personalizado eliminado: ${id}`);
-  res.json({ ok: true });
 });
 
 app.post("/heimdall/api/auth/change-password", authDash, async (req, res) => {
@@ -739,7 +446,7 @@ app.delete("/heimdall/api/auth/remove-totp", authDash, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/heimdall/api/users", authDash, authAuditor, async (req, res) => {
+app.get("/heimdall/api/users", authDash, authAdmin, async (req, res) => {
   const rows = await qRows("SELECT id, username, nombre, role, enabled, created_at, totp_secret FROM users ORDER BY created_at ASC");
   const users = rows.map(u => ({ ...u, has2FA: !!u.totp_secret, totp_secret: undefined }));
   res.json({ users });
@@ -750,7 +457,7 @@ app.post("/heimdall/api/users", authDash, authAdmin, async (req, res) => {
   if (!username || !password) return res.status(400).json({ error: "Datos requeridos" });
   const pErr = validatePassword(password);
   if (pErr) return res.status(400).json({ error: pErr });
-  if (!["admin", "analista", "auditor", "viewer"].includes(role)) return res.status(400).json({ error: "Rol inválido" });
+  if (!["admin", "viewer"].includes(role)) return res.status(400).json({ error: "Rol inválido" });
   const hash = await bcrypt.hash(password, 10);
   try {
     const result = await qRun("INSERT INTO users (username, password_hash, nombre, role) VALUES (?,?,?,?)", [username, hash, nombre.slice(0, 100), role]);
@@ -765,7 +472,7 @@ app.post("/heimdall/api/users", authDash, authAdmin, async (req, res) => {
 app.put("/heimdall/api/users/:id", authDash, authAdmin, async (req, res) => {
   const { role, nombre, username, password } = req.body || {};
   const id = parseInt(req.params.id);
-  if (role && !["admin", "analista", "auditor", "viewer"].includes(role)) return res.status(400).json({ error: "Rol inválido" });
+  if (role && !["admin", "viewer"].includes(role)) return res.status(400).json({ error: "Rol inválido" });
   const updates = []; const params = [];
   if (role !== undefined)              { updates.push("role = ?");          params.push(role); }
   if (nombre !== undefined)            { updates.push("nombre = ?");        params.push(nombre.slice(0, 100)); }
@@ -820,36 +527,6 @@ app.delete("/heimdall/api/users/:id", authDash, authAdmin, async (req, res) => {
   await qRun("DELETE FROM users WHERE id = ?", [id]);
   await logAudit(req.user.id, "user_deleted", `Usuario eliminado: ${user.username}`);
   res.json({ ok: true });
-});
-
-app.get("/heimdall/api/audit", authDash, authAuditor, async (req, res) => {
-  const limit  = Math.min(parseInt(req.query.limit  || "100"), 500);
-  const offset = parseInt(req.query.offset || "0");
-  const [[{ total }]] = await db.execute("SELECT COUNT(*) AS total FROM audit_log");
-  const logs = await qRows(
-    `SELECT al.id, al.action, al.detail, al.ts, u.username FROM audit_log al LEFT JOIN users u ON al.user_id = u.id ORDER BY al.id DESC LIMIT ${limit} OFFSET ${offset}`,
-    []
-  );
-  res.json({ logs, total: Number(total) });
-});
-
-app.get("/heimdall/api/settings/logo", authDash, authAnalista, async (req, res) => {
-  const row = await qRow("SELECT value FROM settings WHERE key_name = 'allsafe-logo'");
-  if (!row) return res.json({ show: true, logoData: null });
-  try { const p = JSON.parse(row.value); res.json({ show: p.show !== false, logoData: p.logoData || null }); }
-  catch { res.json({ show: true, logoData: null }); }
-});
-
-app.put("/heimdall/api/settings/logo", authDash, authAdmin, async (req, res) => {
-  const { show, logoData, reset } = req.body || {};
-  let current = { show: true, logoData: null };
-  const row = await qRow("SELECT value FROM settings WHERE key_name = 'allsafe-logo'");
-  if (row) { try { current = JSON.parse(row.value); } catch {} }
-  if (reset) { current = { show: true, logoData: null }; }
-  else { if (show !== undefined) current.show = !!show; if (logoData !== undefined) current.logoData = logoData; }
-  const v = JSON.stringify(current);
-  await qRun("INSERT INTO settings (key_name, value) VALUES ('allsafe-logo', ?) ON DUPLICATE KEY UPDATE value = ?", [v, v]);
-  res.json({ ok: true, ...current });
 });
 
 app.delete("/heimdall/api/events", authDash, authAdmin, async (req, res) => {
@@ -925,52 +602,6 @@ try {
   });
 } catch {
   console.warn("[Heimdall] SSL no encontrado — HTTPS en :443 deshabilitado. Generar con: openssl req -x509 -newkey rsa:2048 -keyout ssl/key.pem -out ssl/cert.pem -days 3650 -nodes -subj '/CN=heimdall'");
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TCP PORT TRAP  — port scan + nmap detection
-// ═══════════════════════════════════════════════════════════════════════════════
-
-for (const trapPort of TRAP_PORTS) {
-  net.createServer(socket => {
-    const ip     = (socket.remoteAddress || "").replace(/^::ffff:/, "");
-    const chunks = [];
-    let done      = false;
-    let totalBytes = 0;
-
-    socket.setTimeout(1200);
-    socket.on("data", chunk => {
-      totalBytes += chunk.length;
-      if (totalBytes <= 4096) chunks.push(chunk);
-      else socket.destroy();
-    });
-
-    if (TCP_BANNERS[trapPort]) socket.write(TCP_BANNERS[trapPort]);
-
-    function finish() {
-      if (done) return;
-      done = true;
-      const buf  = chunks.length ? Buffer.concat(chunks).slice(0, 512) : Buffer.alloc(0);
-      const tool = detectTcpTool(buf, trapPort);
-      // Log every individual port connection with the detected tool
-      logEvent({ rawIp: ip, type: "SCAN", method: "TCP", urlPath: "", detail: tool, port: trapPort, ua: buf.slice(0, 200).toString("utf8") });
-      // Check for port scan pattern (3+ ports in 10s)
-      const ports = trackPort(ip, trapPort);
-      if (ports) {
-        const toolName = tool.split(" :")[0];
-        logEvent({ rawIp: ip, type: "PORTSCAN", method: "TCP", urlPath: "", detail: `${toolName} · puertos: ${ports}`, port: trapPort });
-      }
-      socket.destroy();
-    }
-
-    socket.on("timeout", finish);
-    socket.on("end",     finish);
-    socket.on("error",   () => { done = true; socket.destroy(); });
-  })
-  .listen(trapPort)
-  .on("error", e => {
-    if (e.code !== "EADDRINUSE") console.warn(`[trap] TCP ${trapPort}: ${e.message}`);
-  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1055,13 +686,12 @@ async function initDB() {
 initDB().then(() => {
   server.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════════════╗`);
-    console.log(`║  HEIMDALL — Honeypot & Dashboard     ║`);
+    console.log(`║  HEIMDALL Community — Honeypot        ║`);
     console.log(`╠══════════════════════════════════════╣`);
     console.log(`║  Dashboard → :${PORT}/heimdall          ║`);
     console.log(`║  Señuelo   → :80 (HTTP)               ║`);
     console.log(`║  Señuelo   → :443 (HTTPS)             ║`);
     console.log(`║  Template  → ${activeTemplate.padEnd(27)}║`);
-    console.log(`║  TCP traps → ${TRAP_PORTS.length} puertos monitoreados  ║`);
     console.log(`╚══════════════════════════════════════╝\n`);
   });
 }).catch(e => { console.error("[Heimdall] Error init:", e.message); process.exit(1); });

@@ -10,14 +10,10 @@ import OverviewCharts from '../components/OverviewCharts'
 import TerminalCard from '../components/TerminalCard'
 import EventTable from '../components/EventTable'
 import IpListView from '../components/IpListView'
-import IpProfile from '../components/IpProfile'
 import MiCuenta from './MiCuenta'
 import Usuarios from './Usuarios'
-import Auditoria from './Auditoria'
-import Senualos from './Senualos'
 import { Trash2 } from 'lucide-react'
 import { getCookie } from '../lib/cookies'
-import { loadPinned, savePinned } from '../lib/templates'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const MAX_LIVE = 2000
@@ -44,15 +40,12 @@ export default function Dashboard({ token, onLogout }) {
   const [events, setEvents] = useState([])
   const [stats, setStats] = useState(null)
   const [paused, setPaused] = useState(false)
-  const [selectedIp, setSelectedIp] = useState(null)
   const [activeTemplate, setActiveTemplate] = useState('generic')
   const [tab, setTab] = useState('overview')
   const [refreshTick, setRefreshTick] = useState(0)
   const [connected, setConnected] = useState(false)
   const [clearConfirm, setClearConfirm] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(true)
-  const [pinnedTemplates, setPinnedTemplates] = useState(loadPinned)
-  const [customTemplates, setCustomTemplates] = useState([])
   const pausedRef = useRef(false)
   const bufferRef = useRef([])
   const seenIpsRef = useRef(new Set())
@@ -89,20 +82,11 @@ export default function Dashboard({ token, onLogout }) {
     } catch { /* ignore */ }
   }, [token])
 
-  const fetchCustomTemplates = useCallback(async () => {
-    try {
-      const r = await fetch(`${BACKEND}/heimdall/api/templates/custom`, { headers: authHeaders })
-      if (!r.ok) return
-      const d = await r.json()
-      setCustomTemplates(d.templates || [])
-    } catch { /* ignore */ }
-  }, [token])
-
   useEffect(() => {
-    fetchStats(); fetchTemplate(); fetchHistory(); fetchCustomTemplates()
+    fetchStats(); fetchTemplate(); fetchHistory()
     const iv = setInterval(fetchStats, 30000)
     return () => clearInterval(iv)
-  }, [fetchStats, fetchTemplate, fetchHistory, fetchCustomTemplates])
+  }, [fetchStats, fetchTemplate, fetchHistory])
 
   useEffect(() => {
     const socket = getSocket(token)
@@ -142,14 +126,6 @@ export default function Dashboard({ token, onLogout }) {
       })
       setActiveTemplate(tpl)
     } catch { /* ignore */ }
-  }
-
-  function handleTogglePin(id) {
-    setPinnedTemplates(prev => {
-      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-      savePinned(next)
-      return next
-    })
   }
 
   async function clearEvents() {
@@ -194,8 +170,6 @@ export default function Dashboard({ token, onLogout }) {
           onTabChange={handleTabChange}
           activeTemplate={activeTemplate}
           onTemplateChange={switchTemplate}
-          pinnedTemplates={pinnedTemplates}
-          customTemplates={customTemplates}
           role={userInfo?.role}
         />
         <SidebarInset>
@@ -218,7 +192,7 @@ export default function Dashboard({ token, onLogout }) {
                 <StatsBar stats={stats} />
                 <OverviewCharts events={events} stats={stats} />
                 <div className='bg-card border border-border rounded-xl overflow-hidden' style={{ height: 360 }}>
-                  <TerminalCard events={events} onIpClick={setSelectedIp} paused={paused} onTogglePause={togglePause} />
+                  <TerminalCard events={events} paused={paused} onTogglePause={togglePause} />
                 </div>
               </div>
             )}
@@ -227,33 +201,21 @@ export default function Dashboard({ token, onLogout }) {
               <div className='space-y-4' style={{ height: 'calc(100vh - 100px)' }}>
                 <StatsBar stats={stats} />
                 <div className='bg-card border border-border rounded-xl overflow-hidden' style={{ height: 'calc(100% - 140px)' }}>
-                  <TerminalCard events={events} onIpClick={setSelectedIp} paused={paused} onTogglePause={togglePause} />
+                  <TerminalCard events={events} paused={paused} onTogglePause={togglePause} />
                 </div>
               </div>
             )}
 
             {tab === 'table' && (
               <div className='bg-card border border-border rounded-xl overflow-hidden'>
-                <EventTable token={token} onIpClick={setSelectedIp} refreshTick={refreshTick} />
+                <EventTable token={token} refreshTick={refreshTick} />
               </div>
             )}
 
             {tab === 'ips' && (
               <div className='bg-card border border-border rounded-xl overflow-hidden'>
-                <IpListView token={token} onIpClick={setSelectedIp} />
+                <IpListView token={token} />
               </div>
-            )}
-
-            {tab === 'senualos' && ['admin', 'analista'].includes(userInfo?.role) && (
-              <Senualos
-                token={token}
-                activeTemplate={activeTemplate}
-                pinnedTemplates={pinnedTemplates}
-                onActivate={switchTemplate}
-                onTogglePin={handleTogglePin}
-                customTemplates={customTemplates}
-                onCustomTemplatesChange={setCustomTemplates}
-              />
             )}
 
             {tab === 'mi_cuenta' && (
@@ -264,15 +226,9 @@ export default function Dashboard({ token, onLogout }) {
               <Usuarios token={token} role={userInfo?.role} />
             )}
 
-            {tab === 'auditoria' && (
-              <Auditoria token={token} />
-            )}
-
           </main>
         </SidebarInset>
       </SidebarProvider>
-
-      {selectedIp && <IpProfile ip={selectedIp} token={token} onClose={() => setSelectedIp(null)} />}
     </LayoutProvider>
   )
 }
