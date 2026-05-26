@@ -58,6 +58,12 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 <br/>
 <img src="screenshots/tabla-v2.png" alt="Tabla de Eventos" width="900"/>
 
+<br/><br/>
+
+**Perfil de IP atacante**
+<br/>
+<img src="screenshots/ip-v2.png" alt="Perfil de IP atacante" width="900"/>
+
 </div>
 
 ---
