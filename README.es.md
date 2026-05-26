@@ -50,13 +50,13 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 
 **Dashboard en tiempo real**
 <br/>
-<img src="screenshots/dashboard-principal.png?v=2" alt="Dashboard en tiempo real" width="900"/>
+<img src="screenshots/dashboard-v2.png" alt="Dashboard en tiempo real" width="900"/>
 
 <br/><br/>
 
 **Historial de eventos**
 <br/>
-<img src="screenshots/tabla-de-eventos.png?v=2" alt="Tabla de Eventos" width="900"/>
+<img src="screenshots/tabla-v2.png" alt="Tabla de Eventos" width="900"/>
 
 </div>
 
