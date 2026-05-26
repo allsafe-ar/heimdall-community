@@ -58,6 +58,12 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 <br/>
 <img src="screenshots/tabla-v2.png" alt="Event Table" width="900"/>
 
+<br/><br/>
+
+**Attacker IP Profile**
+<br/>
+<img src="screenshots/ip-v2.png" alt="Attacker IP Profile" width="900"/>
+
 </div>
 
 ---
