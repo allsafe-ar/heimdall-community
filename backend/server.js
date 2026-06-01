@@ -536,6 +536,9 @@ app.delete("/heimdall/api/events", authDash, authAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Health check — no auth required (used by Docker smoke tests and monitoring)
+app.get("/heimdall/api/health", (req, res) => res.json({ ok: true }));
+
 // Serve dashboard frontend
 app.use("/heimdall", express.static(path.join(__dirname, "../frontend/dist")));
 app.get("/heimdall/*", (req, res) =>
