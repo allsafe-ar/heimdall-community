@@ -50,6 +50,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Pull MySQL image
+        run: docker pull mysql:8.0
+
       - name: Smoke test
         run: |
           docker compose up -d --no-build
