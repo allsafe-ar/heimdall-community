@@ -20,6 +20,7 @@ services:
       start_period: 40s
 
   app:
+    image: heimdall-community-app:latest
     build: .
     restart: unless-stopped
     ports:
