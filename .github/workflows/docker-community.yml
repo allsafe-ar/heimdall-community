@@ -54,14 +54,14 @@ jobs:
         run: |
           docker compose up -d --no-build
           echo "Waiting for app to respond..."
-          for i in $(seq 1 20); do
-            # /heimdall/ sirve el dashboard (SPA); las trampas capturan /api/*
-            if curl -sf -o /dev/null -w "%{http_code}" http://localhost:3005/heimdall/ | grep -q "200"; then
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3005/heimdall/api/health; then
+              echo ""
               echo "✓ Health check passed"
               break
             fi
-            [ $i -eq 20 ] && { echo "Health check timed out"; docker compose logs; exit 1; }
-            sleep 3
+            [ $i -eq 30 ] && { echo "Health check timed out"; docker compose logs; exit 1; }
+            sleep 5
           done
           docker compose down -v
 
