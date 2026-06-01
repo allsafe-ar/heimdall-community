@@ -15,6 +15,6 @@ WORKDIR /app
 COPY backend/package*.json ./
 RUN npm ci --production --silent
 COPY backend/ ./
-COPY --from=frontend-builder /app/dist ./public
+COPY --from=frontend-builder /app/dist /frontend-shadcn/dist
 EXPOSE 3005
 CMD ["node", "server.js"]
