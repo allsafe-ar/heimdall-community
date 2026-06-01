@@ -5,9 +5,9 @@ name: Docker CI (Community)
 
 on:
   push:
-    branches: [community-main]
+    branches: [main]
   pull_request:
-    branches: [community-main]
+    branches: [main]
 
 env:
   IMAGE: ghcr.io/allsafe-ar/heimdall-community
@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: community-main
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -69,7 +67,7 @@ jobs:
           docker compose down -v
 
       - name: Push to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/community-main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker push ${{ env.IMAGE }}:latest
           docker push ${{ env.IMAGE }}:${{ github.sha }}
