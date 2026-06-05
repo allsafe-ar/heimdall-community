@@ -177,6 +177,22 @@ The active template is switchable from the dashboard without restart.
 
 ---
 
+## Security & Auth
+
+The honeypot decoy endpoints are intentionally open — that is the whole point — but the **dashboard and management API are locked down** with the same hardening baseline as the commercial AllSafe suite:
+
+- **JWT** — 12h expiry with `token_version` revocation on password change or user disable
+- **TOTP 2FA** — RFC 6238, setup via QR code
+- **Account lockout** — 5 failed attempts → 15-minute lockout, **persisted in the database** (survives restarts)
+- **bcrypt** password hashing (per-user salt)
+- **Security headers** (Helmet) + **HTTP rate limiting** — 300 req/15 min on the API, auth endpoints throttled to 10/15 min
+- **Role-based access control** — `admin` / `viewer`
+- **100% parameterized SQL** — no string-built queries, no injection vectors (OWASP Top 10 2021)
+- **Fail-fast startup** — the backend refuses to boot with a missing, default or too-short `JWT_SECRET`
+- **CORS** locked to the configured origin (no wildcard)
+
+---
+
 ## Roadmap
 
 - SSH honeypot (port 22, cowrie-style) with command logging

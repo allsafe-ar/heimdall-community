@@ -177,6 +177,22 @@ El template activo se puede cambiar desde el dashboard sin reiniciar.
 
 ---
 
+## Seguridad & Auth
+
+Los endpoints señuelo del honeypot están abiertos a propósito — esa es justamente la idea — pero el **dashboard y la API de gestión están blindados** con la misma base de hardening que la suite comercial de AllSafe:
+
+- **JWT** — expiración 12h con revocación por `token_version` al cambiar contraseña o deshabilitar usuario
+- **TOTP 2FA** — RFC 6238, setup via código QR
+- **Lockout de cuenta** — 5 intentos fallidos → bloqueo de 15 minutos, **persistido en la base de datos** (sobrevive reinicios)
+- **bcrypt** para el hashing de contraseñas (salt por usuario)
+- **Headers de seguridad** (Helmet) + **rate limiting HTTP** — 300 req/15 min en la API, endpoints de auth limitados a 10/15 min
+- **Control de acceso por rol** — `admin` / `viewer`
+- **SQL 100% parametrizado** — sin queries armadas por concatenación, sin vectores de inyección (OWASP Top 10 2021)
+- **Arranque fail-fast** — el backend no inicia con un `JWT_SECRET` ausente, por defecto o demasiado corto
+- **CORS** restringido al origen configurado (sin comodín)
+
+---
+
 ## Roadmap
 
 - Honeypot SSH (puerto 22, estilo cowrie) con logging de comandos
