@@ -85,8 +85,8 @@ Tested on Ubuntu 22.04 / 24.04 and Debian 12.
 ```bash
 git clone https://github.com/allsafe-ar/heimdall-community.git
 cd heimdall-community
-cp backend/.env.example backend/.env
-# Edit backend/.env: set DB_PASSWORD and JWT_SECRET
+cp .env.example .env
+# Edit .env: set DB_PASSWORD, DB_ROOT_PASSWORD and JWT_SECRET (openssl rand -hex 32)
 docker compose up -d
 ```
 

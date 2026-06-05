@@ -298,7 +298,7 @@ app.post("/heimdall/api/auth/login", authLimiter, async (req, res) => {
   }
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role || "admin", nombre: user.nombre || "", tokenVersion: user.token_version || 0 },
-    JWT_SECRET, { expiresIn: "24h" }
+    JWT_SECRET, { expiresIn: "12h" }
   );
   await logAudit(user.id, "login", `Login desde ${clientIp(req)}`);
   res.json({ token, username: user.username, role: user.role });
@@ -419,7 +419,7 @@ app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
   await qRun("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?", [user.id]);
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role || "admin", nombre: user.nombre || "", tokenVersion: user.token_version || 0 },
-    JWT_SECRET, { expiresIn: "24h" }
+    JWT_SECRET, { expiresIn: "12h" }
   );
   await logAudit(user.id, "login_2fa", `Login 2FA desde ${clientIp(req)}`);
   res.json({ token, username: user.username, role: user.role });

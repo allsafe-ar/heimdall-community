@@ -51,6 +51,14 @@ jobs:
       - name: Pull MySQL image
         run: docker pull mysql:8.0
 
+      - name: Generate test .env
+        run: |
+          cat > .env <<EOF
+          DB_PASSWORD=ci_test_db_pw
+          DB_ROOT_PASSWORD=ci_test_root_pw
+          JWT_SECRET=$(openssl rand -hex 32)
+          EOF
+
       - name: Smoke test
         run: |
           docker compose up -d --no-build
