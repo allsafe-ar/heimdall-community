@@ -42,6 +42,31 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **TOTP 2FA** - RFC 6238, setup via QR code
 - **Dark / Light / System theme**
 
+> Looking for **more honeypot templates**, a **custom template builder**, **TCP trap ports** (nmap/masscan/zgrab detection), the **IP Profiler**, or **audit logs**? Those are available in [Heimdall Pro](https://www.allsafe.com.ar).
+
+---
+
+## Community vs Pro
+
+| Feature | Community | Pro |
+|---|:---:|:---:|
+| HTTP & HTTPS decoys (ports 80 / 443) | ✅ | ✅ |
+| Real-time WebSocket dashboard | ✅ | ✅ |
+| Threat scoring (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
+| Event history, statistics & IP geolocation | ✅ | ✅ |
+| TOTP 2FA + account lockout | ✅ | ✅ |
+| Dark / Light / System theme | ✅ | ✅ |
+| Honeypot templates | 4 | 8+ |
+| Custom template builder (logo / colors / labels / text) | ❌ | ✅ |
+| TCP trap ports (nmap / masscan / zgrab detection) | ❌ | ✅ |
+| PORTSCAN classification | ❌ | ✅ |
+| IP Profiler (per-IP attack timeline & threat level) | ❌ | ✅ |
+| Audit log | ❌ | ✅ |
+| Custom branding (organization logo) | ❌ | ✅ |
+| Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
+
+> **Upgrade path**: Community and Pro share the same database schema. Upgrading = replace files + `npm install` + `pm2 restart`. No migration needed.
+
 ---
 
 ## Screenshots
