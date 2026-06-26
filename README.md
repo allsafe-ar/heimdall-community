@@ -62,9 +62,14 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | Custom template builder (logo / colors / labels / text) | ❌ | ✅ |
 | TCP trap ports (nmap / masscan / zgrab detection) | ❌ | ✅ |
 | PORTSCAN classification | ❌ | ✅ |
+| Exploit detection (SQLi / path traversal / Log4Shell / RCE / webshell) | ❌ | ✅ |
 | Interactive FTP / SMTP / SSH credential traps | ❌ | ✅ |
+| Interactive SSH shell (Cowrie-style fake shell) | ❌ | ✅ |
+| Realistic randomized service banners (anti honeypot-fingerprint) | ❌ | ✅ |
 | Configurable decoy ports (live, from the admin UI) | ❌ | ✅ |
 | IP Profiler (per-IP attack timeline & threat level) | ❌ | ✅ |
+| Behavioral IP scoring (cumulative risk per IP) | ❌ | ✅ |
+| Campaign detection (credential stuffing, distributed attacks) | ❌ | ✅ |
 | Threat intelligence (IP enrichment: ASN, reputation, AbuseIPDB, Shodan, Tor & C2 feeds) | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Custom branding (organization logo) | ❌ | ✅ |
