@@ -370,6 +370,48 @@ app.get("/heimdall/api/geo", authDash, async (req, res) => {
   });
 });
 
+// Reporte ejecutivo (Community): agrega por rango + veredicto. Sin score conductual,
+// threat-intel ni detección de explotación (eso es de Pro).
+app.get("/heimdall/api/report", authDash, async (req, res) => {
+  try {
+    const days = { "24h": 1, "7d": 7, "30d": 30 }[req.query.since] || null;
+    const tc = days ? `ts >= (NOW() - INTERVAL ${days} DAY)` : "1=1";
+
+    const [[tot]] = await db.execute(`SELECT COUNT(*) AS events, COUNT(DISTINCT ip) AS ips, MIN(ts) AS first_seen, MAX(ts) AS last_seen FROM events WHERE ${tc}`);
+    const byType    = await qRows(`SELECT type, COUNT(*) AS c, COUNT(DISTINCT ip) AS ips FROM events WHERE ${tc} GROUP BY type ORDER BY c DESC`);
+    const byCountry = await qRows(`SELECT country, COUNT(*) AS c, COUNT(DISTINCT ip) AS ips FROM events WHERE ${tc} AND country IS NOT NULL AND country <> '??' GROUP BY country ORDER BY c DESC LIMIT 10`);
+    const topPaths  = await qRows(`SELECT path, COUNT(*) AS c, COUNT(DISTINCT ip) AS ips FROM events WHERE ${tc} AND path IS NOT NULL AND path <> '' GROUP BY path ORDER BY c DESC LIMIT 10`);
+    const creds     = await qRows(`SELECT detail, COUNT(*) AS c, COUNT(DISTINCT ip) AS ips FROM events WHERE ${tc} AND type='BRUTE' AND detail LIKE '%:%' AND CHAR_LENGTH(detail) > 1 GROUP BY detail ORDER BY c DESC LIMIT 10`);
+    const topIps    = await qRows(`SELECT ip, MAX(country) AS country, COUNT(*) AS hits FROM events WHERE ${tc} GROUP BY ip ORDER BY hits DESC LIMIT 10`);
+    const credStuffing = creds.filter(c => Number(c.ips) >= 2);
+
+    const total = Number(tot.events);
+    const tmap  = Object.fromEntries(byType.map(r => [r.type, Number(r.c)]));
+    const automated = (tmap.BOT || 0) + (tmap.SCAN || 0) + (tmap.RECON || 0) + (tmap.PORTSCAN || 0);
+    const level = credStuffing.length > 0 ? "attention" : "calm";
+
+    res.json({
+      period: req.query.since || "all",
+      generated_at: new Date().toISOString(),
+      totals: { events: total, unique_ips: Number(tot.ips), first_seen: tot.first_seen, last_seen: tot.last_seen },
+      by_type: byType.map(r => ({ type: r.type, count: Number(r.c), ips: Number(r.ips) })),
+      by_country: byCountry.map(r => ({ country: r.country, flag: flag(r.country), count: Number(r.c), ips: Number(r.ips) })),
+      top_paths: topPaths.map(r => ({ path: r.path, count: Number(r.c), ips: Number(r.ips) })),
+      top_ips: topIps.map(r => ({ ip: r.ip, country: r.country, flag: flag(r.country), hits: Number(r.hits) })),
+      credentials: creds.map(r => ({ credential: r.detail, count: Number(r.c), ips: Number(r.ips) })),
+      cred_stuffing: credStuffing.map(r => ({ credential: r.detail, ips: Number(r.ips), attempts: Number(r.c) })),
+      assessment: {
+        level, total, unique_ips: Number(tot.ips),
+        automated_pct: total ? Math.round((automated / total) * 100) : 0,
+        cred_stuffing: credStuffing.length,
+      },
+    });
+  } catch (e) {
+    console.error("[report]", e.message);
+    res.status(500).json({ error: "Error al generar el reporte" });
+  }
+});
+
 app.get("/heimdall/api/events", authDash, async (req, res) => {
   const limit  = Math.min(parseInt(req.query.limit  || "50"), 1000);
   const offset = parseInt(req.query.offset || "0");

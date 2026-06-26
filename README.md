@@ -38,6 +38,8 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **IP list** - Aggregated view of attacking IPs with hit counts and geolocation
 - **Event history** - Paginated table with filter by type
 - **Statistics** - Total events, unique IPs, top attackers, attack breakdown by type
+- **Security reports** - Executive PDF reports with an auto-generated plain-language verdict, event breakdown, top attackers and targeted paths
+- **Guide & glossary** - Built-in reference explaining every attack type and system term in plain language
 - **Role-based access** - `admin` / `viewer`
 - **User management** - Create, edit, enable/disable users
 - **TOTP 2FA** - RFC 6238, setup via QR code
@@ -54,6 +56,8 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | HTTP & HTTPS decoys (ports 80 / 443) | ✅ | ✅ |
 | Real-time WebSocket dashboard | ✅ | ✅ |
 | Cyber Attack Map (live world map with attack arcs) | ✅ | ✅ |
+| Security reports (executive PDF export) | ✅ | ✅ |
+| Guide & glossary | ✅ | ✅ |
 | Threat scoring (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
 | Event history, statistics & IP geolocation | ✅ | ✅ |
 | TOTP 2FA + account lockout | ✅ | ✅ |
@@ -64,7 +68,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | PORTSCAN classification | ❌ | ✅ |
 | Exploit detection (SQLi / path traversal / Log4Shell / RCE / webshell) | ❌ | ✅ |
 | Interactive FTP / SMTP / SSH credential traps | ❌ | ✅ |
-| Interactive SSH shell (Cowrie-style fake shell) | ❌ | ✅ |
+| Interactive SSH shell (fake shell) | ❌ | ✅ |
 | Realistic randomized service banners (anti honeypot-fingerprint) | ❌ | ✅ |
 | Configurable decoy ports (live, from the admin UI) | ❌ | ✅ |
 | IP Profiler (per-IP attack timeline & threat level) | ❌ | ✅ |
@@ -230,7 +234,7 @@ The honeypot decoy endpoints are intentionally open — that is the whole point 
 
 ## Roadmap
 
-- SSH honeypot (port 22, cowrie-style) with command logging
+- SSH honeypot (port 22, fake shell) with command logging
 - Interactive Telnet fake shell
 - Email / webhook alerts when score exceeds threshold
 - CSV / JSON event export

@@ -11,6 +11,8 @@ import TerminalCard from '../components/TerminalCard'
 import EventTable from '../components/EventTable'
 import IpListView from '../components/IpListView'
 import Mapa from './Mapa'
+import Guia from './Guia'
+import Reportes from './Reportes'
 import MiCuenta from './MiCuenta'
 import Usuarios from './Usuarios'
 import { Trash2 } from 'lucide-react'
@@ -221,6 +223,14 @@ export default function Dashboard({ token, onLogout }) {
 
             {tab === 'map' && (
               <Mapa token={token} />
+            )}
+
+            {tab === 'guia' && (
+              <Guia />
+            )}
+
+            {tab === 'reportes' && (
+              <Reportes token={token} />
             )}
 
             {tab === 'mi_cuenta' && (

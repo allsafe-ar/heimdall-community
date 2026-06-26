@@ -38,6 +38,8 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **Lista de IPs** - Vista agregada de IPs atacantes con conteo de hits y geolocalización
 - **Historial de eventos** - Tabla paginada con filtros por tipo
 - **Estadísticas** - Total de eventos, IPs únicas, top atacantes, breakdown por tipo de ataque
+- **Reportes de seguridad** - Informes ejecutivos exportables a PDF con veredicto automático en lenguaje claro, desglose de eventos, top atacantes y rutas atacadas
+- **Guía y glosario** - Referencia integrada que explica cada tipo de ataque y término del sistema en lenguaje simple
 - **Control de acceso por roles** - `admin` / `viewer`
 - **Gestión de usuarios** - Crear, editar, habilitar/deshabilitar usuarios
 - **TOTP 2FA** - RFC 6238, configuración via código QR
@@ -54,6 +56,8 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Señuelos HTTP y HTTPS (puertos 80 / 443) | ✅ | ✅ |
 | Dashboard en tiempo real (WebSocket) | ✅ | ✅ |
 | Cyber Attack Map (mapa mundial en vivo con arcos de ataque) | ✅ | ✅ |
+| Reportes de seguridad (export a PDF ejecutivo) | ✅ | ✅ |
+| Guía y glosario | ✅ | ✅ |
 | Scoring de amenazas (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
 | Historial de eventos, estadísticas y geolocalización de IPs | ✅ | ✅ |
 | TOTP 2FA + lockout de cuenta | ✅ | ✅ |
@@ -64,7 +68,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Clasificación PORTSCAN | ❌ | ✅ |
 | Detección de explotación (SQLi / path traversal / Log4Shell / RCE / webshell) | ❌ | ✅ |
 | Trampas interactivas FTP / SMTP / SSH (captura de credenciales) | ❌ | ✅ |
-| Shell SSH interactivo (shell falso estilo Cowrie) | ❌ | ✅ |
+| Shell SSH interactivo (shell falso) | ❌ | ✅ |
 | Banners de servicio realistas y aleatorizados (anti-fingerprint de honeypot) | ❌ | ✅ |
 | Puertos cebo configurables (en caliente, desde la UI) | ❌ | ✅ |
 | IP Profiler (timeline de ataque y nivel de amenaza por IP) | ❌ | ✅ |
@@ -230,7 +234,7 @@ Los endpoints señuelo del honeypot están abiertos a propósito — esa es just
 
 ## Roadmap
 
-- Honeypot SSH (puerto 22, estilo cowrie) con logging de comandos
+- Honeypot SSH (puerto 22, shell falso) con logging de comandos
 - Shell falsa interactiva por Telnet
 - Alertas por email / webhook cuando el score supera un umbral
 - Exportación de eventos CSV / JSON

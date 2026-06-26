@@ -27,6 +27,8 @@ export function Header({ tab, username, nombre, role, onMiCuenta, onLogout, conn
     table:    t('page.table'),
     ips:      t('page.ips'),
     map:      t('page.map'),
+    guia:     t('page.guide'),
+    reportes: t('page.reports'),
     senualos: t('page.senualos'),
   }
   const [offset, setOffset] = useState(0)

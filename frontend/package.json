@@ -1,6 +1,6 @@
 {
   "name": "heimdall-frontend",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 5180",
@@ -26,6 +26,8 @@
     "clsx": "^2.1.1",
     "d3-geo": "^3.1.1",
     "i18next": "^26.2.0",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.344.0",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",

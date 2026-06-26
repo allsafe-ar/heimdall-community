@@ -42,3 +42,16 @@ export function threatLevel(score) {
   if (score >= 30) return { label: 'MEDIO', color: 'text-yellow-400' }
   return { label: 'BAJO', color: 'text-green-400' }
 }
+
+// Nivel conductual por IP (lo usa el reporte compartido; en Community no se calcula
+// score conductual, pero el helper debe existir para que el import resuelva)
+export const BEHAVIOR_META = {
+  critical: { label: 'CRÍTICO', short: 'CRÍT', color: 'text-red-400',    dot: 'bg-red-500',    hex: '#f87171' },
+  high:     { label: 'ALTO',    short: 'ALTO', color: 'text-orange-400', dot: 'bg-orange-500', hex: '#fb923c' },
+  medium:   { label: 'MEDIO',   short: 'MED',  color: 'text-yellow-400', dot: 'bg-yellow-500', hex: '#facc15' },
+  low:      { label: 'BAJO',    short: 'BAJO', color: 'text-green-400',  dot: 'bg-green-500',  hex: '#4ade80' },
+}
+
+export function behaviorMeta(level) {
+  return BEHAVIOR_META[level] || BEHAVIOR_META.low
+}

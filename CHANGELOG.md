@@ -3,6 +3,12 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.2.0] - 2026-06-26
+
+### Added
+- **Guide & glossary**: built-in reference page explaining every attack type (BRUTE, SCAN, BOT, RECON, HUMAN) and system concept (honeypot, credential stuffing, etc.) in plain language, bilingual (ES/EN), with search.
+- **Security reports**: executive report with an auto-generated plain-language verdict and event/IP/path/country breakdown, exportable to a branded PDF (navy header + AllSafe logo). New endpoint `GET /heimdall/api/report`.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added

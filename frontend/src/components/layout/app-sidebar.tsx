@@ -11,7 +11,7 @@ import { AppTitle } from './app-title'
 import { NavGroup } from './nav-group'
 import { NavSenualos } from './nav-senualos'
 import { NavUser } from './nav-user'
-import { BarChart2, Zap, ClipboardList, Globe, Map } from 'lucide-react'
+import { BarChart2, Zap, ClipboardList, Globe, Map, FileText, BookOpen } from 'lucide-react'
 
 interface Props {
   token: string
@@ -34,6 +34,11 @@ export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplate
     { id: 'map',      title: t('nav.map'),      icon: Map           },
   ]
 
+  const NAV_ANALYSIS = [
+    { id: 'reportes', title: t('nav.reports'),  icon: FileText      },
+    { id: 'guia',     title: t('nav.guide'),    icon: BookOpen      },
+  ]
+
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
       <SidebarHeader>
@@ -44,6 +49,13 @@ export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplate
         <NavGroup
           title={t('nav.monitor')}
           items={NAV_MONITOR}
+          activeId={tab}
+          onSelect={onTabChange}
+          role={role}
+        />
+        <NavGroup
+          title={t('nav.analysis')}
+          items={NAV_ANALYSIS}
           activeId={tab}
           onSelect={onTabChange}
           role={role}
