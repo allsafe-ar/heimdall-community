@@ -1,6 +1,6 @@
 {
   "name": "heimdall-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Heimdall — Web Honeypot & Dashboard",
   "main": "server.js",
   "scripts": {

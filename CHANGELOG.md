@@ -3,6 +3,12 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.1.0] - 2026-06-26
+
+### Added
+- **Cyber Attack Map**: real-time world map (flat planisphere, fully offline — no external tiles) showing attack origins, with animated attack arcs that travel from each origin to the defended host, a time-range filter (24h / 7d / 30d / all) and a top-countries panel. Powered by `d3-geo` + `topojson-client` + `world-atlas`.
+- `events` table now stores `lat`/`lon` (additive migration + one-time backfill of historical rows from geoip-lite). New endpoint `GET /heimdall/api/geo`.
+
 ## [1.0.1] - 2026-06-05
 
 ### Security

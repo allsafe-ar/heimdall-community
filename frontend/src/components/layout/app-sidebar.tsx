@@ -11,7 +11,7 @@ import { AppTitle } from './app-title'
 import { NavGroup } from './nav-group'
 import { NavSenualos } from './nav-senualos'
 import { NavUser } from './nav-user'
-import { BarChart2, Zap, ClipboardList, Globe } from 'lucide-react'
+import { BarChart2, Zap, ClipboardList, Globe, Map } from 'lucide-react'
 
 interface Props {
   token: string
@@ -31,6 +31,7 @@ export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplate
     { id: 'live',     title: t('nav.live'),     icon: Zap           },
     { id: 'table',    title: t('nav.table'),    icon: ClipboardList },
     { id: 'ips',      title: t('nav.ips'),      icon: Globe         },
+    { id: 'map',      title: t('nav.map'),      icon: Map           },
   ]
 
   return (

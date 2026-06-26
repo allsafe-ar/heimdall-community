@@ -34,6 +34,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **Señuelos HTTP y HTTPS** - Puertos 80 y 443 con soporte de certificado autofirmado
 - **Scoring de amenazas** - Cada evento recibe una clasificación de riesgo: BRUTE / SCAN / BOT / RECON / HUMAN
 - **Dashboard en tiempo real** - Feed de eventos en vivo via WebSocket con pause/resume sin perder eventos
+- **Cyber Attack Map** - Mapa mundial en tiempo real con el origen de los ataques y arcos animados que viajan hacia el host defendido
 - **Lista de IPs** - Vista agregada de IPs atacantes con conteo de hits y geolocalización
 - **Historial de eventos** - Tabla paginada con filtros por tipo
 - **Estadísticas** - Total de eventos, IPs únicas, top atacantes, breakdown por tipo de ataque
@@ -42,7 +43,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **TOTP 2FA** - RFC 6238, configuración via código QR
 - **Tema Dark / Light / Sistema**
 
-> ¿Buscás **más templates de honeypot**, un **constructor de templates personalizados**, **puertos trampa TCP** (detección de nmap/masscan/zgrab), el **IP Profiler** o **audit logs**? Esas funcionalidades están en [Heimdall Pro](https://www.allsafe.com.ar).
+> ¿Buscás **más templates de honeypot**, un **constructor de templates personalizados**, **puertos trampa TCP** (detección de nmap/masscan/zgrab), el **IP Profiler**, **inteligencia de amenazas** (enriquecimiento de IPs con AbuseIPDB / Shodan / Tor / feeds de C2) o **audit logs**? Esas funcionalidades están en [Heimdall Pro](https://www.allsafe.com.ar).
 
 ---
 
@@ -52,6 +53,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 |---|:---:|:---:|
 | Señuelos HTTP y HTTPS (puertos 80 / 443) | ✅ | ✅ |
 | Dashboard en tiempo real (WebSocket) | ✅ | ✅ |
+| Cyber Attack Map (mapa mundial en vivo con arcos de ataque) | ✅ | ✅ |
 | Scoring de amenazas (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
 | Historial de eventos, estadísticas y geolocalización de IPs | ✅ | ✅ |
 | TOTP 2FA + lockout de cuenta | ✅ | ✅ |
@@ -61,6 +63,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Puertos trampa TCP (detección nmap / masscan / zgrab) | ❌ | ✅ |
 | Clasificación PORTSCAN | ❌ | ✅ |
 | IP Profiler (timeline de ataque y nivel de amenaza por IP) | ❌ | ✅ |
+| Inteligencia de amenazas (enriquecimiento de IP: ASN, reputación, AbuseIPDB, Shodan, Tor y feeds de C2) | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Branding personalizado (logo de organización) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |

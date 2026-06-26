@@ -34,6 +34,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **HTTP & HTTPS decoys** - Ports 80 and 443 with self-signed certificate support
 - **Threat scoring** - Each event gets a risk classification: BRUTE / SCAN / BOT / RECON / HUMAN
 - **Real-time dashboard** - Live event feed via WebSocket with pause/resume without missing events
+- **Cyber Attack Map** - Real-time world map of attack origins with animated attack arcs converging on the defended host
 - **IP list** - Aggregated view of attacking IPs with hit counts and geolocation
 - **Event history** - Paginated table with filter by type
 - **Statistics** - Total events, unique IPs, top attackers, attack breakdown by type
@@ -42,7 +43,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **TOTP 2FA** - RFC 6238, setup via QR code
 - **Dark / Light / System theme**
 
-> Looking for **more honeypot templates**, a **custom template builder**, **TCP trap ports** (nmap/masscan/zgrab detection), the **IP Profiler**, or **audit logs**? Those are available in [Heimdall Pro](https://www.allsafe.com.ar).
+> Looking for **more honeypot templates**, a **custom template builder**, **TCP trap ports** (nmap/masscan/zgrab detection), the **IP Profiler**, **threat intelligence** (IP enrichment with AbuseIPDB / Shodan / Tor / C2 feeds), or **audit logs**? Those are available in [Heimdall Pro](https://www.allsafe.com.ar).
 
 ---
 
@@ -52,6 +53,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 |---|:---:|:---:|
 | HTTP & HTTPS decoys (ports 80 / 443) | ✅ | ✅ |
 | Real-time WebSocket dashboard | ✅ | ✅ |
+| Cyber Attack Map (live world map with attack arcs) | ✅ | ✅ |
 | Threat scoring (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
 | Event history, statistics & IP geolocation | ✅ | ✅ |
 | TOTP 2FA + account lockout | ✅ | ✅ |
@@ -61,6 +63,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | TCP trap ports (nmap / masscan / zgrab detection) | ❌ | ✅ |
 | PORTSCAN classification | ❌ | ✅ |
 | IP Profiler (per-IP attack timeline & threat level) | ❌ | ✅ |
+| Threat intelligence (IP enrichment: ASN, reputation, AbuseIPDB, Shodan, Tor & C2 feeds) | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Custom branding (organization logo) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |

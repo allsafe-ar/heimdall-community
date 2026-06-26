@@ -51,7 +51,14 @@ async function logAudit(userId, action, detail = '') {
 function geoLookup(rawIp) {
   const ip  = (rawIp || "").replace(/^::ffff:/, "").split(",")[0].trim();
   const geo = geoip.lookup(ip) || {};
-  return { ip, country: geo.country || "??", city: geo.city || "" };
+  const ll  = Array.isArray(geo.ll) ? geo.ll : [];
+  return {
+    ip,
+    country: geo.country || "??",
+    city:    geo.city || "",
+    lat:     typeof ll[0] === "number" ? ll[0] : null,
+    lon:     typeof ll[1] === "number" ? ll[1] : null,
+  };
 }
 
 function flag(code) {
@@ -145,6 +152,8 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     ip:           geo.ip,
     country:      geo.country,
     city:         geo.city,
+    lat:          geo.lat,
+    lon:          geo.lon,
     flag:         flag(geo.country),
     type,
     method,
@@ -157,8 +166,8 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
   };
   try {
     await qRun(
-      "INSERT INTO events (ip, country, city, type, method, path, detail, port, user_agent, threat_score, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-      [ev.ip, ev.country, ev.city, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ts]
+      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ts]
     );
   } catch (e) { console.error("[log]", e.message); }
   io.emit("event", ev);
@@ -317,6 +326,48 @@ app.get("/heimdall/api/stats", authDash, async (req, res) => {
   const byCountryWithFlag  = byCountry.map(r => ({ ...r, flag: flag(r.country) }));
   const topTypeRow = byType.reduce((best, r) => Number(r.c) > Number(best?.c || 0) ? r : best, null);
   res.json({ total: Number(total), unique_ips: Number(unique_ips), today: Number(today), top_ip: topIp, top_credentials: topCreds, by_type: byType, by_country: byCountryWithFlag, by_hour: byHour, active_template: activeTemplate, templates: TEMPLATES, top_type: topTypeRow?.type || null, top_type_count: Number(topTypeRow?.c || 0) });
+});
+
+app.get("/heimdall/api/geo", authDash, async (req, res) => {
+  // Rango temporal opcional: 24h | 7d | 30d (default: todo)
+  const days = { "24h": 1, "7d": 7, "30d": 30 }[req.query.since] || null;
+  const timeCond = days ? `ts >= (NOW() - INTERVAL ${days} DAY)` : "1=1";
+
+  const byCountry = await qRows(`
+    SELECT country, COUNT(*) AS hits, COUNT(DISTINCT ip) AS ips,
+           ROUND(AVG(threat_score)) AS avg_score, MAX(ts) AS last_seen
+    FROM events
+    WHERE ${timeCond} AND country IS NOT NULL AND country <> '??'
+    GROUP BY country
+    ORDER BY hits DESC`);
+
+  const points = await qRows(`
+    SELECT lat, lon,
+           MAX(country) AS country, MAX(city) AS city,
+           COUNT(*) AS hits, COUNT(DISTINCT ip) AS ips,
+           ROUND(AVG(threat_score)) AS avg_score,
+           MAX(ip) AS sample_ip,
+           SUBSTRING_INDEX(GROUP_CONCAT(type ORDER BY threat_score DESC), ',', 1) AS top_type
+    FROM events
+    WHERE ${timeCond} AND lat IS NOT NULL AND lon IS NOT NULL
+    GROUP BY lat, lon
+    ORDER BY hits DESC
+    LIMIT 3000`);
+
+  res.json({
+    by_country: byCountry.map(r => ({
+      country: r.country, flag: flag(r.country),
+      hits: Number(r.hits), ips: Number(r.ips),
+      avg_score: Number(r.avg_score || 0), last_seen: r.last_seen,
+    })),
+    points: points.map(r => ({
+      lat: Number(r.lat), lon: Number(r.lon),
+      country: r.country, flag: flag(r.country), city: r.city,
+      hits: Number(r.hits), ips: Number(r.ips),
+      avg_score: Number(r.avg_score || 0),
+      top_type: r.top_type || "RECON", sample_ip: r.sample_ip,
+    })),
+  });
 });
 
 app.get("/heimdall/api/events", authDash, async (req, res) => {
@@ -618,6 +669,8 @@ async function initDB() {
     ip           VARCHAR(45)  NOT NULL,
     country      CHAR(2),
     city         VARCHAR(100),
+    lat          DECIMAL(8,5),
+    lon          DECIMAL(8,5),
     type         ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN') NOT NULL,
     method       VARCHAR(10),
     path         VARCHAR(500),
@@ -647,6 +700,8 @@ async function initDB() {
   try { await qRun("ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN failed_attempts INT NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN locked_until DATETIME DEFAULT NULL"); } catch {}
+  try { await qRun("ALTER TABLE events ADD COLUMN lat DECIMAL(8,5) DEFAULT NULL"); } catch {}
+  try { await qRun("ALTER TABLE events ADD COLUMN lon DECIMAL(8,5) DEFAULT NULL"); } catch {}
 
   await qRun(`CREATE TABLE IF NOT EXISTS audit_log (
     id       BIGINT      AUTO_INCREMENT PRIMARY KEY,
@@ -684,6 +739,23 @@ async function initDB() {
   }
   await trimEvents();
   setInterval(trimEvents, 60 * 60 * 1000); // cada hora
+
+  // Backfill de coordenadas para eventos históricos (geoip-lite es local, sin costo).
+  async function backfillGeo() {
+    try {
+      const rows = await qRows("SELECT DISTINCT ip FROM events WHERE lat IS NULL LIMIT 5000");
+      let done = 0;
+      for (const { ip } of rows) {
+        const g = geoLookup(ip);
+        if (g.lat != null) {
+          await qRun("UPDATE events SET lat = ?, lon = ? WHERE ip = ? AND lat IS NULL", [g.lat, g.lon, ip]);
+          done++;
+        }
+      }
+      if (rows.length) console.log(`[Heimdall] Backfill geo: ${done}/${rows.length} IPs geolocalizadas`);
+    } catch (e) { console.warn("[Heimdall] backfillGeo:", e.message); }
+  }
+  backfillGeo();
 }
 
 initDB().then(() => {

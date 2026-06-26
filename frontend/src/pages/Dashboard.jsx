@@ -10,6 +10,7 @@ import OverviewCharts from '../components/OverviewCharts'
 import TerminalCard from '../components/TerminalCard'
 import EventTable from '../components/EventTable'
 import IpListView from '../components/IpListView'
+import Mapa from './Mapa'
 import MiCuenta from './MiCuenta'
 import Usuarios from './Usuarios'
 import { Trash2 } from 'lucide-react'
@@ -216,6 +217,10 @@ export default function Dashboard({ token, onLogout }) {
               <div className='bg-card border border-border rounded-xl overflow-hidden'>
                 <IpListView token={token} />
               </div>
+            )}
+
+            {tab === 'map' && (
+              <Mapa token={token} />
             )}
 
             {tab === 'mi_cuenta' && (
