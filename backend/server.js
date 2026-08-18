@@ -89,16 +89,45 @@ const KNOWN_SCANNERS = [
 
 const REAL_BROWSER_UA = /Mozilla\/5\.0.*(?:Chrome|Firefox|Safari|Gecko|Edge|Trident)/i;
 
+// Los escáneres piden "//xmlrpc.php" o "//wp-includes/wlwmanifest.xml": la doble
+// barra hacía fallar el match exacto contra SCAN_PATHS y esos escaneos se iban
+// como HUMAN o BOT. Se normaliza antes de clasificar.
+function normalizePath(p) {
+  let v = String(p || "").replace(/\/{2,}/g, "/");
+  if (v.length > 1 && v.endsWith("/")) v = v.slice(0, -1);
+  return v || "/";
+}
+
+// Familias de archivos y rutas sensibles, para las variantes que un Set de
+// coincidencia exacta no ve: .env.local, .env.production, /api/.env, etc.
+const SCAN_PATTERNS = [
+  /(^|\/)\.env(\.[\w-]+)?$/i,
+  /(^|\/)\.git(\/|$)/i,
+  /(^|\/)\.aws(\/|$)/i,
+  /(^|\/)\.ssh(\/|$)/i,
+  /wlwmanifest\.xml$/i,
+  /(^|\/)xmlrpc\.php$/i,
+  /(^|\/)wp-(login\.php|admin|config\.php)/i,
+  /(^|\/)(phpinfo|test|info|shell|cmd|wso)\.php$/i,
+  /(^|\/)actuator(\/|$)/i,
+  /(^|\/)(phpmyadmin|pma)(\/|$)/i,
+  /(^|\/)server-status$/i,
+  /(^|\/)\.(htaccess|htpasswd|DS_Store)$/i,
+  /(^|\/)config\.(php|json|ya?ml)$/i,
+];
+
 function classifyHttp(method, urlPath, ua) {
   const uaLow = (ua || "").toLowerCase();
-  // Known automated scanners/tools — classify before anything else
+  const p     = normalizePath(urlPath);
+  // El path sensible manda sobre el user-agent: pedir /.env o /wp-login.php es un
+  // escaneo dirigido lo diga quien lo diga, y el UA se falsea gratis.
+  if (SCAN_PATHS.has(p) || SCAN_PATTERNS.some(re => re.test(p))) return "SCAN";
+  if (/\.\.|%2e%2e|%252e|\/etc\/|\/proc\//i.test(p)) return "SCAN";
+  // Known automated scanners/tools
   if (KNOWN_SCANNERS.some(s => uaLow.includes(s))) return "BOT";
   if (/bot|crawl|spider|scraper/i.test(uaLow)) return "BOT";
-  // Path-based checks take priority over browser UA (bots spoof real browser UAs)
-  if (SCAN_PATHS.has(urlPath)) return "SCAN";
-  if (/\.\.|%2e%2e|%252e|\/etc\/|\/proc\//i.test(urlPath)) return "SCAN";
   // Non-browser POST to login endpoints → brute-force tool
-  if (method === "POST" && /login|auth|session|signin/i.test(urlPath)) return "BRUTE";
+  if (method === "POST" && /login|auth|session|signin/i.test(p)) return "BRUTE";
   // Only classify as human if using a real browser AND not hitting recon paths
   if (REAL_BROWSER_UA.test(ua || "")) return "HUMAN";
   return "RECON";
@@ -248,9 +277,9 @@ function clientIp(req) {
 // Serve honeypot assets on main app too (needed when port 80 is taken by nginx)
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-app.get("/",          (req, res) => serveTemplate(res, activeTemplate));
-app.get("/login",     (req, res) => serveTemplate(res, activeTemplate));
-app.get("/index.html",(req, res) => serveTemplate(res, activeTemplate));
+// "/", "/login" e "/index.html" NO se atajan acá: caen al catch-all del final, que
+// es el único que llama a logEvent y sirve el mismo señuelo. Atajarlos hacía que el
+// honeypot perdiera en silencio toda visita a su puerta de entrada.
 
 // Capture login attempts — never authenticate, always delay + reject
 app.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/login"], async (req, res) => {
@@ -272,7 +301,10 @@ app.use(async (req, res, next) => {
   const ip   = clientIp(req);
   const ua   = req.headers["user-agent"] || "";
   const type = classifyHttp(req.method, req.path, ua);
-  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: ua.slice(0, 200), ua });
+  // detail guardaba una copia del user_agent, que ya tiene columna propia: se
+  // prioriza la query string, que es la evidencia de por qué se clasificó así.
+  const qs = (req.originalUrl || "").slice(req.path.length);
+  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua });
   // Return the trap page — keeps attacker engaged
   serveTemplate(res, activeTemplate);
 });
@@ -649,8 +681,8 @@ function buildTrapApp() {
 
   t.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-  t.get(["/", "/login", "/index.html", "/wp-login.php", "/wp-admin", "/admin"], (req, res) =>
-    serveTemplate(res, activeTemplate));
+  // Los GET de la raíz y de los paths clásicos de escaneo NO se atajan acá: caen al
+  // catch-all del final, que es el único que registra el evento.
 
   t.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/login"], async (req, res) => {
     const ip   = clientIp(req);
@@ -668,7 +700,8 @@ function buildTrapApp() {
     const ip   = clientIp(req);
     const ua   = req.headers["user-agent"] || "";
     const type = classifyHttp(req.method, req.path, ua);
-    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: ua.slice(0, 200), ua });
+    const qs = (req.originalUrl || "").slice(req.path.length);
+    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua });
     serveTemplate(res, activeTemplate);
   });
 
