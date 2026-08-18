@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react'
 import Dashboard from './pages/Dashboard'
 import { disconnectSocket } from './lib/socket'
 import allsafeLogo from './assets/allsafe-logo.png'
+import { APP_VERSION } from './lib/version'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const TOKEN_KEY = 'heimdall_token'
@@ -125,7 +126,7 @@ function TotpPage({ userId, onLogin, onBack }) {
           </button>
         </div>
         <p style={{ fontSize: '0.75rem', color: 'oklch(0.30 0.02 264)', textAlign: 'center' }}>
-          AllSafe Security Solutions · Datos cifrados localmente
+          Heimdall Community v{APP_VERSION} · AllSafe Security Solutions
         </p>
       </div>
     </div>
@@ -264,7 +265,7 @@ function LoginPage({ onLogin }) {
         </div>
 
         <p style={{ fontSize: '0.75rem', color: 'oklch(0.30 0.02 264)', textAlign: 'center' }}>
-          AllSafe Security Solutions · Datos cifrados localmente
+          Heimdall Community v{APP_VERSION} · AllSafe Security Solutions
         </p>
       </div>
     </div>

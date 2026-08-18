@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FileText, Printer, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react'
 import { getMeta, behaviorMeta, fmtDateTime } from '../lib/utils'
 import { generateReportPDF } from '../lib/report-pdf'
+import HelpTip from '@/components/HelpTip'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
@@ -54,6 +55,7 @@ export default function Reportes({ token }) {
           <h2 className='text-lg font-semibold text-foreground flex items-center gap-2'>
             <FileText className='size-5 text-muted-foreground' />
             {t('report.title')}
+            <HelpTip side='right' title={t('help.report.t')} description={t('help.report.d')} tips={[t('help.report.k1'), t('help.report.k2'), t('help.report.k3')]} />
           </h2>
           <p className='text-sm text-muted-foreground'>{t('report.subtitle')}</p>
         </div>

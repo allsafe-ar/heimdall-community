@@ -9,7 +9,16 @@ export const TYPE_META = {
   BOT:      { color: 'text-yellow-400', dot: 'bg-yellow-500', hex: '#facc15', label: 'BOT',      lucide: 'Bot'        },
   RECON:    { color: 'text-blue-400',   dot: 'bg-blue-500',   hex: '#60a5fa', label: 'RECON',    lucide: 'Eye'        },
   HUMAN:    { color: 'text-green-400',  dot: 'bg-green-500',  hex: '#4ade80', label: 'HUMANO',   lucide: 'User'       },
+  EXPLOIT:  { color: 'text-pink-400',   dot: 'bg-pink-500',   hex: '#ec4899', label: 'EXPLOIT',  lucide: 'Bug'        },
+  // Categorías benignas: tonos apagados a propósito, para que no compitan
+  // visualmente con lo que sí es un ataque.
+  RESEARCH: { color: 'text-cyan-400',   dot: 'bg-cyan-500',   hex: '#22d3ee', label: 'RESEARCH', lucide: 'Radar'      },
+  CRAWLER:  { color: 'text-slate-400',  dot: 'bg-slate-500',  hex: '#94a3b8', label: 'CRAWLER',  lucide: 'Search'     },
 }
+
+// Tipos que NO son un ataque. Separan "tráfico" de "amenaza" en las vistas.
+export const TIPOS_BENIGNOS = ['CRAWLER', 'RESEARCH']
+export const esBenigno = (type) => TIPOS_BENIGNOS.includes(type)
 
 export function getMeta(type) {
   return TYPE_META[type] || TYPE_META.RECON

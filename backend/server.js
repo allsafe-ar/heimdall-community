@@ -18,6 +18,8 @@ const helmet     = require("helmet");
 const cors       = require("cors");
 const geoip      = require("geoip-lite");
 const rateLimit  = require("express-rate-limit");
+const threatIntel = require("./integrations/threat-intel");
+const APP_VERSION = require("./package.json").version;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const PORT        = parseInt(process.env.PORT        || "3005");
@@ -76,9 +78,12 @@ const SCAN_PATHS = new Set([
   "/phpmyadmin", "/pma", "/.aws/credentials", "/etc/passwd",
   "/proc/self/environ", "/xmlrpc.php", "/shell.php", "/.DS_Store",
   "/config/database.php", "/api/swagger", "/swagger-ui.html",
-  "/.well-known/security.txt", "/robots.txt", "/sitemap.xml", "/favicon.ico",
   "/login.php", "/administrator", "/user/login", "/jenkins",
 ]);
+
+// robots.txt, sitemap.xml, favicon.ico y security.txt NO son paths de escaneo: son
+// lo que pide todo navegador y todo buscador legítimo. Como el path manda sobre el
+// user-agent, tenerlos acá hacía que cada visita de Googlebot puntuara como escaneo.
 
 const KNOWN_SCANNERS = [
   "nmap", "masscan", "zgrab", "shodan", "censys", "nuclei", "sqlmap",
@@ -87,7 +92,59 @@ const KNOWN_SCANNERS = [
   "scrapy", "wget/", "zgrab2", "zmap",
 ];
 
+// Patrones de explotación (SQLi, traversal, Log4Shell, RCE, inyección de comandos,
+// XSS, webshell). La catalogación es igual en las dos ediciones: un honeypot que no
+// distingue un intento de explotación de una visita está defectuoso, no recortado.
+const EXPLOIT_RE = /(\bunion\b.{0,40}\bselect\b|\bselect\b.{0,60}\bfrom\b|sleep\(\s*\d|benchmark\(|\bor\b\s+1\s*=\s*1|\/etc\/passwd|\/proc\/self|\.\.[\/\\]|%2e%2e|\$\{jndi:|<script\b|onerror\s*=|javascript:|;\s*(?:cat|wget|curl|bash|sh|nc|chmod|rm|id)\b|\|\s*(?:sh|bash)\b|\$\(|\beval\(|\bsystem\(|\bexec\(|passthru\(|base64_decode|\/bin\/(?:sh|bash)|c99|r57|wso\.php|webshell|cmd=|cgi-bin\/.*\.(?:sh|cgi))/i;
+
+function safeDecode(s) { try { return decodeURIComponent(s); } catch { return s; } }
+
+// Crawlers legítimos: buscadores, redes sociales y bots de IA. NO son una amenaza,
+// y marcarlos como tal es un error de catalogación, no una función de pago.
+const CRAWLERS_LEGITIMOS = /(googlebot|google-inspectiontool|storebot-google|bingbot|adidxbot|duckduckbot|applebot|yandex(bot|images)|baiduspider|slurp|sogou|exabot|facebookexternalhit|meta-externalagent|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|redditbot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|bytespider|amazonbot|amzn-searchbot|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|anthropic-ai|ccbot|perplexitybot|applebot-extended|google-extended|diffbot|screaming frog)/i;
+
+// Monitoreo de disponibilidad contratado por el propio dueño del servidor.
+const MONITOREO = /(uptimerobot|uptime-kuma|pingdom|statuscake|newrelic|datadog|zabbix|nagios|site24x7|hetrix|betteruptime|freshping|updown\.io|cron-job\.org)/i;
+
+// Escaneo de investigación de Internet: catalogan lo expuesto y publican el resultado.
+const ESCANER_INVESTIGACION = /(shodan|censys|binaryedge|fofa|quake|internet-?measurement|netsystemsresearch|paloalto|expanse|leakix|onyphe|driftnet|stretchoid|odin|shadowserver|internetcensus|securitytrails|criminalip|recyber|alphastrike)/i;
+
 const REAL_BROWSER_UA = /Mozilla\/5\.0.*(?:Chrome|Firefox|Safari|Gecko|Edge|Trident)/i;
+
+// Señales de navegador presentes en el request. Se guardan por evento para que el
+// veredicto HUMAN sea auditable: el user-agent se falsea escribiendo una línea.
+function browserSignals(req) {
+  const h = (req && req.headers) || {};
+  const acc = h['accept'] || '';
+  const enc = h['accept-encoding'] || '';
+  return {
+    lang:    !!(h['accept-language'] || '').trim(),
+    html:    acc.includes('text/html') || acc.includes('application/xhtml'),
+    fetch:   !!(h['sec-fetch-mode'] || h['sec-fetch-site'] || h['sec-fetch-dest']),
+    upgrade: h['upgrade-insecure-requests'] === '1',
+    brotli:  /\bbr\b/.test(enc),
+    ch:      !!(h['sec-ch-ua'] || h['sec-ch-ua-platform']),
+  };
+}
+
+function signalsTag(sig) {
+  return Object.entries(sig).filter(([, v]) => v).map(([k]) => k).join(",") || "ninguna";
+}
+
+// Un navegador real no se prueba con el user-agent, se prueba con los headers que
+// manda solo y una herramienta tiene que imitar a propósito.
+//
+// El umbral depende del esquema: Sec-Fetch-* y Sec-CH-UA se envían SOLO a orígenes
+// seguros, así que sobre el señuelo en HTTP plano un navegador real no puede
+// mandarlas y exigir dos señales lo dejaría afuera.
+function looksLikeRealBrowser(ua, req) {
+  if (!REAL_BROWSER_UA.test(ua || "")) return false;
+  const s = browserSignals(req);
+  if (!s.lang || !s.html) return false;
+  const modernas = [s.fetch, s.upgrade, s.brotli, s.ch].filter(Boolean).length;
+  const origenSeguro = !!(req && req.secure) || ((req && req.headers['x-forwarded-proto']) || '').includes('https');
+  return modernas >= (origenSeguro ? 2 : 1);
+}
 
 // Los escáneres piden "//xmlrpc.php" o "//wp-includes/wlwmanifest.xml": la doble
 // barra hacía fallar el match exacto contra SCAN_PATHS y esos escaneos se iban
@@ -116,25 +173,35 @@ const SCAN_PATTERNS = [
   /(^|\/)config\.(php|json|ya?ml)$/i,
 ];
 
-function classifyHttp(method, urlPath, ua) {
+function classifyHttp(method, urlPath, ua, req) {
   const uaLow = (ua || "").toLowerCase();
   const p     = normalizePath(urlPath);
+  const full  = (req && (req.originalUrl || req.url)) || urlPath || "";
+  // Intento de explotación: máxima prioridad
+  if (EXPLOIT_RE.test(full) || EXPLOIT_RE.test(safeDecode(full))) return "EXPLOIT";
   // El path sensible manda sobre el user-agent: pedir /.env o /wp-login.php es un
-  // escaneo dirigido lo diga quien lo diga, y el UA se falsea gratis.
+  // escaneo dirigido lo diga quien lo diga, y el UA se falsea gratis. Va antes que
+  // las familias de UA a propósito: un Googlebot pidiendo /.env no está indexando.
   if (SCAN_PATHS.has(p) || SCAN_PATTERNS.some(re => re.test(p))) return "SCAN";
   if (/\.\.|%2e%2e|%252e|\/etc\/|\/proc\//i.test(p)) return "SCAN";
+  // Crawler legítimo o monitoreo propio: no es amenaza
+  if (CRAWLERS_LEGITIMOS.test(uaLow) || MONITOREO.test(uaLow)) return "CRAWLER";
+  // Escaneo de investigación de Internet: exposición, no ataque dirigido
+  if (ESCANER_INVESTIGACION.test(uaLow)) return "RESEARCH";
   // Known automated scanners/tools
   if (KNOWN_SCANNERS.some(s => uaLow.includes(s))) return "BOT";
   if (/bot|crawl|spider|scraper/i.test(uaLow)) return "BOT";
   // Non-browser POST to login endpoints → brute-force tool
   if (method === "POST" && /login|auth|session|signin/i.test(p)) return "BRUTE";
-  // Only classify as human if using a real browser AND not hitting recon paths
-  if (REAL_BROWSER_UA.test(ua || "")) return "HUMAN";
+  // HUMAN exige cabeceras de navegador real, no alcanza el user-agent
+  if (req && looksLikeRealBrowser(ua, req)) return "HUMAN";
   return "RECON";
 }
 
 function threatScore(type) {
-  return { BRUTE: 80, PORTSCAN: 70, SCAN: 55, BOT: 40, RECON: 20, HUMAN: 30 }[type] ?? 10;
+  // CRAWLER casi no puntúa: es Googlebot indexando o el monitoreo propio.
+  // RESEARCH puntúa poco: Shodan y Censys catalogan lo expuesto, no atacan.
+  return { EXPLOIT: 90, BRUTE: 80, PORTSCAN: 70, SCAN: 55, BOT: 40, HUMAN: 30, RECON: 20, RESEARCH: 15, CRAWLER: 5 }[type] ?? 10;
 }
 
 // ─── Express + Socket.io ──────────────────────────────────────────────────────
@@ -173,7 +240,7 @@ function serveTemplate(res, name) {
 }
 
 // ─── Event logging + broadcast ────────────────────────────────────────────────
-async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", port = null, ua = "" }) {
+async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", port = null, ua = "", signals = null }) {
   const geo   = geoLookup(rawIp);
   const score = threatScore(type);
   const ts    = new Date();
@@ -190,13 +257,14 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     detail:       (detail || "").slice(0, 500),
     port,
     ua:           (ua || "").slice(0, 300),
+    signals:      signals || null,
     threat_score: score,
     ts:           ts.toISOString(),
   };
   try {
     await qRun(
-      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ts]
+      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ev.signals, ts]
     );
   } catch (e) { console.error("[log]", e.message); }
   io.emit("event", ev);
@@ -289,8 +357,8 @@ app.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/l
   const user = (body.username || body.user || body.email || body.log || "").slice(0, 100);
   const pass = (body.password || body.pass || body.pwd || "").slice(0, 100);
   const detail = user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200);
-  const type = REAL_BROWSER_UA.test(ua) ? "HUMAN" : "BRUTE";
-  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua });
+  const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
+  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua, signals: signalsTag(browserSignals(req)) });
   await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
   res.status(401).json({ error: "Usuario o contraseña incorrectos." });
 });
@@ -300,11 +368,11 @@ app.use(async (req, res, next) => {
   if (req.path.startsWith("/heimdall")) return next();
   const ip   = clientIp(req);
   const ua   = req.headers["user-agent"] || "";
-  const type = classifyHttp(req.method, req.path, ua);
+  const type = classifyHttp(req.method, req.path, ua, req);
   // detail guardaba una copia del user_agent, que ya tiene columna propia: se
   // prioriza la query string, que es la evidencia de por qué se clasificó así.
   const qs = (req.originalUrl || "").slice(req.path.length);
-  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua });
+  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
   // Return the trap page — keeps attacker engaged
   serveTemplate(res, activeTemplate);
 });
@@ -491,6 +559,89 @@ app.get("/heimdall/api/ips", authDash, async (req, res) => {
   res.json({ ips, total: Number(total) });
 });
 
+// ─── Perfil de IP y threat intel ──────────────────────────────────────────────
+// Community: solo las fuentes sin clave (ASN por Team Cymru, Tor, FeodoTracker,
+// C2-Tracker) y de a una IP, a pedido. El lote, el automático y las fuentes con
+// cuenta (AbuseIPDB, Shodan, GreyNoise) son de la edición Pro.
+
+// Lee el intel cacheado de una IP, o null si nunca se enriqueció
+async function getIntel(ip) {
+  try {
+    const row = await qRow("SELECT * FROM ip_intel WHERE ip = ?", [ip]);
+    if (!row) return null;
+    let data = {};
+    try { data = typeof row.data_json === "string" ? JSON.parse(row.data_json) : (row.data_json || {}); } catch { /* ignore */ }
+    return {
+      asn: row.asn, as_org: row.as_org,
+      is_tor: !!row.is_tor,
+      reputation: row.reputation, intel_score: row.intel_score,
+      feodo_malware: data.feodo_malware || null,
+      sources: data.sources || [], enriched_at: row.enriched_at,
+    };
+  } catch { return null; }
+}
+
+async function enrichAndSave(ip) {
+  const intel = await threatIntel.enrichIP(ip);
+  await qRun(
+    `INSERT INTO ip_intel (ip, asn, as_org, is_tor, reputation, intel_score, data_json, enriched_at)
+     VALUES (?,?,?,?,?,?,?,NOW())
+     ON DUPLICATE KEY UPDATE asn=VALUES(asn), as_org=VALUES(as_org), is_tor=VALUES(is_tor),
+       reputation=VALUES(reputation), intel_score=VALUES(intel_score), data_json=VALUES(data_json),
+       enriched_at=NOW()`,
+    [ip, intel.asn, intel.as_org, intel.is_tor ? 1 : 0, intel.reputation, intel.intel_score,
+     JSON.stringify({ feodo_malware: intel.feodo_malware, sources: intel.sources })]
+  );
+  return intel;
+}
+
+app.get("/heimdall/api/ip/:ip", authDash, async (req, res) => {
+  const ip = req.params.ip;
+  const events  = await qRows("SELECT * FROM events WHERE ip = ? ORDER BY id DESC LIMIT 200", [ip]);
+  const [[agg]] = await db.execute(
+    `SELECT COUNT(*) AS total, MIN(ts) AS first_seen, MAX(ts) AS last_seen,
+            COUNT(DISTINCT port) AS ports, COUNT(DISTINCT path) AS paths,
+            COUNT(DISTINCT type) AS type_count, SUM(type='EXPLOIT') AS exploits,
+            MAX(threat_score) AS max_score
+     FROM events WHERE ip = ?`, [ip]
+  );
+  const [creds] = await db.execute(
+    "SELECT detail, COUNT(*) AS c FROM events WHERE ip = ? AND type = 'BRUTE' GROUP BY detail ORDER BY c DESC LIMIT 20", [ip]
+  );
+  const [paths] = await db.execute(
+    "SELECT path, COUNT(*) AS c FROM events WHERE ip = ? GROUP BY path ORDER BY c DESC LIMIT 20", [ip]
+  );
+  const [types] = await db.execute(
+    "SELECT type, COUNT(*) AS c FROM events WHERE ip = ? GROUP BY type", [ip]
+  );
+  const geo = geoLookup(ip);
+  const intel = await getIntel(ip);
+  res.json({ ip, ...geo, flag: flag(geo.country), ...agg, events, top_credentials: creds, top_paths: paths, by_type: types, intel });
+});
+
+// Enriquecimiento manual, de a una IP. Sin worker automático ni lote: eso es Pro.
+app.post("/heimdall/api/ip/:ip/enrich", authDash, authAdmin, async (req, res) => {
+  const ip = req.params.ip;
+  if (!/^[0-9a-fA-F.:]{3,45}$/.test(ip)) return res.status(400).json({ error: "IP inválida" });
+  try {
+    const intel = await enrichAndSave(ip);
+    await logAudit(req.user.id, "ip_enrich", `Enriquecida IP ${ip} → ${intel.reputation} (${intel.intel_score})`);
+    res.json(await getIntel(ip));
+  } catch (e) {
+    console.error("[enrich]", e.message);
+    res.status(500).json({ error: "Error al enriquecer la IP" });
+  }
+});
+
+// Estado de las fuentes sin clave, para la Guía y el diagnóstico
+app.get("/heimdall/api/integrations/status", authDash, authAdmin, async (req, res) => {
+  try {
+    res.json({ integrations: await threatIntel.checkIntegrations() });
+  } catch (e) {
+    res.status(500).json({ error: "Error al chequear las fuentes" });
+  }
+});
+
 app.get("/heimdall/api/template", authDash, (req, res) => {
   res.json({ template: activeTemplate, templates: TEMPLATES });
 });
@@ -662,7 +813,8 @@ app.delete("/heimdall/api/events", authDash, authAdmin, async (req, res) => {
 });
 
 // Health check — no auth required (used by Docker smoke tests and monitoring)
-app.get("/heimdall/api/health", (req, res) => res.json({ ok: true }));
+// Expone la versión para poder verificar un despliegue sin entrar al panel.
+app.get("/heimdall/api/health", (req, res) => res.json({ ok: true, version: APP_VERSION }));
 
 // Serve dashboard frontend
 app.use("/heimdall", express.static(path.join(__dirname, "../frontend/dist")));
@@ -690,8 +842,8 @@ function buildTrapApp() {
     const body = req.body || {};
     const user = (body.username || body.user || body.email || body.log || "").slice(0, 100);
     const pass = (body.password || body.pass || body.pwd || "").slice(0, 100);
-    const type = REAL_BROWSER_UA.test(ua) ? "HUMAN" : "BRUTE";
-    await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail: user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200), ua });
+    const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
+    await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail: user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
     await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
     res.status(401).json({ error: "Usuario o contraseña incorrectos." });
   });
@@ -699,9 +851,9 @@ function buildTrapApp() {
   t.use(async (req, res) => {
     const ip   = clientIp(req);
     const ua   = req.headers["user-agent"] || "";
-    const type = classifyHttp(req.method, req.path, ua);
+    const type = classifyHttp(req.method, req.path, ua, req);
     const qs = (req.originalUrl || "").slice(req.path.length);
-    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua });
+    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
     serveTemplate(res, activeTemplate);
   });
 
@@ -746,7 +898,8 @@ async function initDB() {
     city         VARCHAR(100),
     lat          DECIMAL(8,5),
     lon          DECIMAL(8,5),
-    type         ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN') NOT NULL,
+    type         ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN','EXPLOIT','CRAWLER','RESEARCH') NOT NULL,
+    signals      VARCHAR(80) DEFAULT NULL,
     method       VARCHAR(10),
     path         VARCHAR(500),
     detail       TEXT,
@@ -777,6 +930,9 @@ async function initDB() {
   try { await qRun("ALTER TABLE users ADD COLUMN locked_until DATETIME DEFAULT NULL"); } catch {}
   try { await qRun("ALTER TABLE events ADD COLUMN lat DECIMAL(8,5) DEFAULT NULL"); } catch {}
   try { await qRun("ALTER TABLE events ADD COLUMN lon DECIMAL(8,5) DEFAULT NULL"); } catch {}
+  // Migraciones additivas de la v1.3.0: categorías nuevas y señales de navegador
+  try { await qRun("ALTER TABLE events ADD COLUMN signals VARCHAR(80) DEFAULT NULL"); } catch {}
+  try { await qRun("ALTER TABLE events MODIFY COLUMN type ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN','EXPLOIT','CRAWLER','RESEARCH') NOT NULL"); } catch {}
 
   await qRun(`CREATE TABLE IF NOT EXISTS audit_log (
     id       BIGINT      AUTO_INCREMENT PRIMARY KEY,
@@ -785,6 +941,26 @@ async function initDB() {
     detail   TEXT,
     ts       DATETIME    DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_ts (ts)
+  ) ENGINE=InnoDB CHARSET=utf8mb4`);
+
+  // Caché de threat intel por IP. Community usa solo las fuentes sin clave; las
+  // columnas de las fuentes con cuenta quedan definidas igual para no divergir del
+  // esquema de la edición Pro, y simplemente van vacías.
+  await qRun(`CREATE TABLE IF NOT EXISTS ip_intel (
+    ip            VARCHAR(45)  PRIMARY KEY,
+    asn           INT,
+    as_org        VARCHAR(190),
+    isp           VARCHAR(190),
+    abuse_score   TINYINT UNSIGNED DEFAULT 0,
+    abuse_reports INT DEFAULT 0,
+    is_tor        TINYINT(1) DEFAULT 0,
+    is_hosting    TINYINT(1) DEFAULT 0,
+    reputation    VARCHAR(20) DEFAULT 'unknown',
+    intel_score   TINYINT UNSIGNED DEFAULT 0,
+    data_json     JSON,
+    enriched_at   DATETIME,
+    INDEX idx_reputation (reputation),
+    INDEX idx_enriched   (enriched_at)
   ) ENGINE=InnoDB CHARSET=utf8mb4`);
 
   await qRun(`CREATE TABLE IF NOT EXISTS settings (

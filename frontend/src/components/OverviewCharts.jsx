@@ -1,19 +1,26 @@
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import HelpTip from '@/components/HelpTip'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from 'recharts'
 
-const TYPE_ORDER = ['BRUTE', 'PORTSCAN', 'SCAN', 'BOT', 'RECON', 'HUMAN']
+// De lo más grave a lo inofensivo. EXPLOIT, RESEARCH y CRAWLER se suman en v1.3.0.
+const TYPE_ORDER = ['EXPLOIT', 'BRUTE', 'PORTSCAN', 'SCAN', 'BOT', 'HUMAN', 'RECON', 'RESEARCH', 'CRAWLER']
 
+// Mismos colores que TYPE_META en lib/utils.js. Recharts no resuelve variables CSS.
 const TYPE_BARS = [
+  { key: 'EXPLOIT',  fill: '#ec4899', label: 'EXPLOIT'  },
   { key: 'BRUTE',    fill: '#f87171', label: 'BRUTE'    },
   { key: 'PORTSCAN', fill: '#c084fc', label: 'PORTSCAN' },
   { key: 'SCAN',     fill: '#fb923c', label: 'SCAN'     },
   { key: 'BOT',      fill: '#facc15', label: 'BOT'      },
-  { key: 'RECON',    fill: '#60a5fa', label: 'RECON'    },
   { key: 'HUMAN',    fill: '#4ade80', label: 'HUMANO'   },
+  { key: 'RECON',    fill: '#60a5fa', label: 'RECON'    },
+  { key: 'RESEARCH', fill: '#22d3ee', label: 'RESEARCH' },
+  { key: 'CRAWLER',  fill: '#94a3b8', label: 'CRAWLER'  },
 ]
 
 function HeimdallTooltip({ active, payload }) {
@@ -36,6 +43,7 @@ function HeimdallTooltip({ active, payload }) {
 }
 
 export default function OverviewCharts({ events, stats }) {
+  const { t } = useTranslation()
 
   const hourly = useMemo(() => {
     const now = Date.now()
@@ -100,7 +108,7 @@ export default function OverviewCharts({ events, stats }) {
       {/* Bar chart — type distribution — Gjallarhorn pattern */}
       <div className="xl:col-span-2 bg-card border border-border rounded-xl p-3 flex flex-col">
         <div className="mb-2">
-          <p className="text-sm font-semibold text-foreground">Distribución por tipo</p>
+          <p className="text-sm font-semibold text-foreground flex items-center gap-2">Distribución por tipo<HelpTip side='left' title={t('help.eventtypes.t')} description={t('help.eventtypes.d')} tips={[t('help.eventtypes.k1'), t('help.eventtypes.k2'), t('help.eventtypes.k3'), t('help.eventtypes.k4'), t('help.eventtypes.k5')]} /></p>
           <p className="text-xs text-muted-foreground">Total acumulado</p>
         </div>
         {hasData ? (

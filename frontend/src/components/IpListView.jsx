@@ -11,6 +11,9 @@ const TYPE_FILTERS = [
   { value: 'BOT',   label: 'BOT'     },
   { value: 'RECON', label: 'RECON'   },
   { value: 'HUMAN', label: 'HUMANO'  },
+  { value: 'EXPLOIT',  label: 'EXPLOIT' },
+  { value: 'RESEARCH', label: 'RESEARCH' },
+  { value: 'CRAWLER',  label: 'CRAWLER' },
 ]
 
 const SORT_OPTIONS = [
@@ -19,7 +22,7 @@ const SORT_OPTIONS = [
   { value: 'first_seen', label: 'Más antigua'  },
 ]
 
-export default function IpListView({ token }) {
+export default function IpListView({ token, onIpClick }) {
   const [ips, setIps]             = useState([])
   const [total, setTotal]         = useState(0)
   const [page, setPage]           = useState(0)
@@ -126,9 +129,17 @@ export default function IpListView({ token }) {
                 className="border-b border-border hover:bg-muted/30 transition-colors"
               >
                 <td className="px-4 py-2.5">
-                  <span className="font-terminal text-sm text-zinc-200">
-                    {row.ip}
-                  </span>
+                  {onIpClick ? (
+                    <button
+                      onClick={() => onIpClick(row.ip)}
+                      className="font-terminal text-sm text-zinc-200 hover:text-primary transition-colors"
+                      title="Ver perfil de la IP"
+                    >
+                      {row.ip}
+                    </button>
+                  ) : (
+                    <span className="font-terminal text-sm text-zinc-200">{row.ip}</span>
+                  )}
                 </td>
                 <td className="px-4 py-2.5 text-zinc-400 text-xs whitespace-nowrap">
                   <span className="mr-1">{row.flag}</span>

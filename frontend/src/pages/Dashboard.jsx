@@ -10,6 +10,7 @@ import OverviewCharts from '../components/OverviewCharts'
 import TerminalCard from '../components/TerminalCard'
 import EventTable from '../components/EventTable'
 import IpListView from '../components/IpListView'
+import IpProfile from '../components/IpProfile'
 import Mapa from './Mapa'
 import Guia from './Guia'
 import Reportes from './Reportes'
@@ -40,6 +41,7 @@ function normalizeStats(d) {
 export default function Dashboard({ token, onLogout }) {
   const { t } = useTranslation()
   const userInfo = decodeToken(token)
+  const [selectedIp, setSelectedIp] = useState(null)
   const [events, setEvents] = useState([])
   const [stats, setStats] = useState(null)
   const [paused, setPaused] = useState(false)
@@ -217,7 +219,7 @@ export default function Dashboard({ token, onLogout }) {
 
             {tab === 'ips' && (
               <div className='bg-card border border-border rounded-xl overflow-hidden'>
-                <IpListView token={token} />
+                <IpListView token={token} onIpClick={setSelectedIp} />
               </div>
             )}
 
@@ -242,6 +244,10 @@ export default function Dashboard({ token, onLogout }) {
             )}
 
           </main>
+          {selectedIp && (
+            <IpProfile ip={selectedIp} token={token} isAdmin={userInfo?.role === 'admin'}
+              onClose={() => setSelectedIp(null)} />
+          )}
         </SidebarInset>
       </SidebarProvider>
     </LayoutProvider>

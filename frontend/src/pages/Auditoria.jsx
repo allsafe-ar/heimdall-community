@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ClipboardList, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import HelpTip from '@/components/HelpTip'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const PAGE_SIZE = 50
@@ -61,6 +62,7 @@ export default function Auditoria({ token }) {
         <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <ClipboardList size={20} className="text-primary" />
           {t('auditoria.title')}
+          <HelpTip side='right' title={t('help.audit.t')} description={t('help.audit.d')} tips={[t('help.audit.k1'), t('help.audit.k2'), t('help.audit.k3')]} />
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {t('auditoria.desc', { total })}

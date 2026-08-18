@@ -32,7 +32,10 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 
 - **4 templates de honeypot** - WordPress, cPanel, Portal Corporativo, Microsoft
 - **Señuelos HTTP y HTTPS** - Puertos 80 y 443 con soporte de certificado autofirmado
-- **Scoring de amenazas** - Cada evento recibe una clasificación de riesgo: BRUTE / SCAN / BOT / RECON / HUMAN
+- **Catalogación de eventos** - Cada evento recibe una categoría: EXPLOIT / BRUTE / SCAN / BOT / HUMAN / RECON / RESEARCH / CRAWLER
+- **Threat intel sin clave** - Enriquecimiento por IP con ASN (Team Cymru), nodos de salida de Tor, FeodoTracker y C2-Tracker. Sin API key y sin configuración
+- **Perfil de IP** - Línea de tiempo de la IP, rutas pedidas, credenciales capturadas y threat intel
+- **Ayuda contextual** - Un botón de ayuda en cada pantalla que explica qué es y qué hacer
 - **Dashboard en tiempo real** - Feed de eventos en vivo via WebSocket con pause/resume sin perder eventos
 - **Cyber Attack Map** - Mapa mundial en tiempo real con el origen de los ataques y arcos animados que viajan hacia el host defendido
 - **Lista de IPs** - Vista agregada de IPs atacantes con conteo de hits y geolocalización
@@ -45,7 +48,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **TOTP 2FA** - RFC 6238, configuración via código QR
 - **Tema Dark / Light / Sistema**
 
-> ¿Buscás **más templates de honeypot**, un **constructor de templates personalizados**, **puertos trampa TCP** (detección de nmap/masscan/zgrab), el **IP Profiler**, **inteligencia de amenazas** (enriquecimiento de IPs con AbuseIPDB / Shodan / Tor / feeds de C2) o **audit logs**? Esas funcionalidades están en [Heimdall Pro](https://www.allsafe.com.ar).
+> Buscás **más señuelos**, un **asistente para crear el señuelo propio**, **puertos trampa TCP** (detección de nmap/masscan/zgrab), **trampas interactivas FTP/SSH/SMTP**, **score conductual por IP**, **detección de campañas**, **fuentes de intel con cuenta** (AbuseIPDB / Shodan / GreyNoise) con enriquecimiento en lote y automático, o **audit logs**? Esas funcionalidades están en [Heimdall Pro](https://www.allsafe.com.ar).
 
 ---
 
@@ -58,26 +61,39 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Cyber Attack Map (mapa mundial en vivo con arcos de ataque) | ✅ | ✅ |
 | Reportes de seguridad (export a PDF ejecutivo) | ✅ | ✅ |
 | Guía y glosario | ✅ | ✅ |
-| Scoring de amenazas (BRUTE / SCAN / BOT / RECON / HUMAN) | ✅ | ✅ |
+| Catalogación de eventos (EXPLOIT / BRUTE / SCAN / BOT / HUMAN / RECON / RESEARCH / CRAWLER) | ✅ | ✅ |
+| Detección de explotación (SQLi / path traversal / Log4Shell / RCE / webshell) | ✅ | ✅ |
+| HUMAN verificado por cabeceras del navegador, no por el User-Agent | ✅ | ✅ |
+| Separación de buscadores legítimos y escáneres de investigación (CRAWLER / RESEARCH) | ✅ | ✅ |
+| Perfil de IP (línea de tiempo, rutas pedidas y credenciales capturadas) | ✅ | ✅ |
+| Threat intel, fuentes sin clave (ASN, nodos de salida de Tor, FeodoTracker, C2-Tracker), de a una IP | ✅ | ✅ |
+| Ayuda contextual en cada pantalla | ✅ | ✅ |
 | Historial de eventos, estadísticas y geolocalización de IPs | ✅ | ✅ |
 | TOTP 2FA + lockout de cuenta | ✅ | ✅ |
 | Tema Dark / Light / Sistema | ✅ | ✅ |
 | Templates de honeypot | 4 | 8+ |
-| Constructor de templates (logo / colores / textos) | ❌ | ✅ |
+| Señuelos propios y asistente de señuelo (logo / colores / textos) | ❌ | ✅ |
 | Puertos trampa TCP (detección nmap / masscan / zgrab) | ❌ | ✅ |
 | Clasificación PORTSCAN | ❌ | ✅ |
-| Detección de explotación (SQLi / path traversal / Log4Shell / RCE / webshell) | ❌ | ✅ |
 | Trampas interactivas FTP / SMTP / SSH (captura de credenciales) | ❌ | ✅ |
 | Shell SSH interactivo (shell falso) | ❌ | ✅ |
 | Banners de servicio realistas y aleatorizados (anti-fingerprint de honeypot) | ❌ | ✅ |
 | Puertos cebo configurables (en caliente, desde la UI) | ❌ | ✅ |
-| IP Profiler (timeline de ataque y nivel de amenaza por IP) | ❌ | ✅ |
 | Score conductual por IP (riesgo acumulado por IP) | ❌ | ✅ |
 | Detección de campañas (credential stuffing, ataques distribuidos) | ❌ | ✅ |
-| Inteligencia de amenazas (enriquecimiento de IP: ASN, reputación, AbuseIPDB, Shodan, Tor y feeds de C2) | ❌ | ✅ |
+| Threat intel, fuentes con cuenta (AbuseIPDB / Shodan / GreyNoise) | ❌ | ✅ |
+| Threat intel en lote y worker de enriquecimiento automático | ❌ | ✅ |
+| Reputación derivada en el dashboard y badges por IP | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Branding personalizado (logo de organización) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
+
+
+> **Dónde está el corte**: la calidad de la catalogación es idéntica en las dos ediciones. Un
+> honeypot que etiqueta mal el tráfico está defectuoso, no "es la versión gratis", así que cada
+> corrección y cada categoría de evento va en Community. Lo que suma Pro es profundidad: trampas
+> interactivas, señuelos propios, análisis conductual, fuentes de intel con cuenta y automatización,
+> e integración con la defensa propia.
 
 > **Upgrade path**: Community y Pro comparten el mismo esquema de base de datos. Actualizar = reemplazar archivos + `npm install` + `pm2 restart`. Sin migraciones.
 

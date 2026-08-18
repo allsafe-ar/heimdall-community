@@ -4,6 +4,7 @@ import { geoNaturalEarth1, geoPath } from 'd3-geo'
 import { feature } from 'topojson-client'
 import worldData from 'world-atlas/countries-110m.json'
 import { getSocket } from '../lib/socket'
+import HelpTip from '@/components/HelpTip'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
@@ -167,7 +168,7 @@ export default function Mapa({ token }) {
       {/* Cabecera: rango temporal */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className='text-lg font-semibold text-foreground'>{t('map.title')}</h2>
+          <h2 className='text-lg font-semibold text-foreground flex items-center gap-2'>{t('map.title')}<HelpTip side='bottom' title={t('help.map.t')} description={t('help.map.d')} tips={[t('help.map.k1'), t('help.map.k2'), t('help.map.k3')]} /></h2>
           <p className='text-sm text-muted-foreground'>{t('map.subtitle')}</p>
         </div>
         <div className='flex items-center gap-1 rounded-lg border border-border bg-card p-1'>

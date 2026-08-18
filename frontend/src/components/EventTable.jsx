@@ -15,6 +15,9 @@ export default function EventTable({ token, refreshTick }) {
     { value: 'BOT',    label: 'BOT'     },
     { value: 'RECON',  label: 'RECON'   },
     { value: 'HUMAN',  label: t('events.human') },
+    { value: 'EXPLOIT',  label: 'EXPLOIT' },
+    { value: 'RESEARCH', label: 'RESEARCH' },
+    { value: 'CRAWLER',  label: 'CRAWLER' },
   ]
   const [events, setEvents] = useState([])
   const [total, setTotal] = useState(0)

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Star, CheckCircle2, Zap, Trash2, Wand2, X, Upload, Image as ImageIcon } from 'lucide-react'
 import { ALL_TEMPLATES } from '../lib/templates'
+import HelpTip from '@/components/HelpTip'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
@@ -312,7 +313,7 @@ export default function Senualos({ token, activeTemplate, pinnedTemplates, onAct
   return (
     <div className='space-y-8 max-w-3xl'>
       <div>
-        <h2 className='text-lg font-semibold text-foreground'>{t('senualos.title')}</h2>
+        <h2 className='text-lg font-semibold text-foreground flex items-center gap-2'>{t('senualos.title')}<HelpTip side='right' title={t('help.decoys.t')} description={t('help.decoys.d')} tips={[t('help.decoys.k1'), t('help.decoys.k2'), t('help.decoys.k3'), t('help.decoys.k4')]} /></h2>
         <p className='text-sm text-muted-foreground mt-1'>
           {t('senualos.desc')}
         </p>

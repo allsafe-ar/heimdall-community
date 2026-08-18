@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { getMeta, fmtDateTime, threatLevel } from '../lib/utils'
+import HelpTip from '@/components/HelpTip'
+import { useTranslation } from 'react-i18next'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
-export default function IpProfile({ ip, token, onClose }) {
+const REPUTACION = {
+  malicious:  { label: 'Maliciosa',  cls: 'border-red-400/40 text-red-300 bg-red-400/10' },
+  tor:        { label: 'Tor',        cls: 'border-purple-400/40 text-purple-300 bg-purple-400/10' },
+  suspicious: { label: 'Sospechosa', cls: 'border-yellow-400/40 text-yellow-300 bg-yellow-400/10' },
+  clean:      { label: 'Limpia',     cls: 'border-green-400/40 text-green-300 bg-green-400/10' },
+}
+
+export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [enriching, setEnriching] = useState(false)
 
   useEffect(() => {
     if (!ip) return
@@ -27,6 +38,21 @@ export default function IpProfile({ ip, token, onClose }) {
         setLoading(false)
       })
       .catch(() => setLoading(false))
+  }, [ip, token])
+
+  // Enriquecimiento manual, de a una IP. En Community solo las fuentes sin clave.
+  const enrich = useCallback(async () => {
+    setEnriching(true)
+    try {
+      const r = await fetch(`${BACKEND}/heimdall/api/ip/${encodeURIComponent(ip)}/enrich`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      })
+      if (r.ok) {
+        const intel = await r.json()
+        setData(d => ({ ...d, intel }))
+      }
+    } catch { /* ignore */ }
+    setEnriching(false)
   }, [ip, token])
 
   if (!ip) return null
@@ -147,6 +173,70 @@ export default function IpProfile({ ip, token, onClose }) {
                 </div>
               </div>
             )}
+
+            {/* Threat Intel */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-zinc-500 text-xs uppercase tracking-widest flex items-center gap-2">
+                  Threat Intel
+                  <HelpTip side='left' title={t('help.threatintel.t')} description={t('help.threatintel.d')}
+                    tips={[t('help.threatintel.k1'), t('help.threatintel.k2'), t('help.threatintel.k3')]} />
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={enrich}
+                    disabled={enriching}
+                    className="text-xs px-2.5 py-1 rounded-md border border-border text-zinc-300 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                  >
+                    {enriching ? 'Analizando…' : data.intel ? 'Actualizar' : 'Enriquecer'}
+                  </button>
+                )}
+              </div>
+
+              {data.intel ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(() => {
+                      const rep = REPUTACION[data.intel.reputation] || REPUTACION.clean
+                      return <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${rep.cls}`}>{rep.label}</span>
+                    })()}
+                    {data.intel.is_tor && (
+                      <span className="text-xs px-2 py-1 rounded-full border border-purple-400/40 text-purple-300 bg-purple-400/10">Nodo de salida Tor</span>
+                    )}
+                    {data.intel.feodo_malware && (
+                      <span className="text-xs px-2 py-1 rounded-full border border-red-400/40 text-red-300 bg-red-400/10">{data.intel.feodo_malware}</span>
+                    )}
+                    <span className="text-zinc-500 text-xs ml-auto">
+                      Intel score: <span className="text-zinc-200 font-medium">{data.intel.intel_score}</span>
+                    </span>
+                  </div>
+
+                  {(data.intel.asn || data.intel.as_org) && (
+                    <div className="text-xs flex gap-2">
+                      <span className="text-zinc-600 shrink-0">ASN</span>
+                      <span className="text-zinc-300">
+                        {data.intel.asn ? `AS${data.intel.asn}` : ''}{data.intel.as_org ? ` · ${data.intel.as_org}` : ''}
+                      </span>
+                    </div>
+                  )}
+
+                  {data.intel.enriched_at && (
+                    <div className="text-zinc-700 text-[10px] font-terminal">Enriquecido: {fmtDateTime(data.intel.enriched_at)}</div>
+                  )}
+
+                  <div className="text-zinc-600 text-[10px] border-t border-border pt-2">
+                    Fuentes sin clave: ASN (Team Cymru), nodos de salida de Tor, FeodoTracker y C2-Tracker.
+                    AbuseIPDB, Shodan y GreyNoise, el análisis en lote y el automático están en la edición Pro.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-zinc-600 text-xs">
+                  {isAdmin
+                    ? 'IP sin enriquecer. Consultá el ASN, si es un nodo de salida de Tor y si figura en los feeds de C2 y botnets.'
+                    : 'IP sin enriquecer.'}
+                </div>
+              )}
+            </div>
 
             {/* First / last seen */}
             <div className="grid grid-cols-2 gap-3">
