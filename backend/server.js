@@ -19,6 +19,7 @@ const cors       = require("cors");
 const geoip      = require("geoip-lite");
 const rateLimit  = require("express-rate-limit");
 const threatIntel = require("./integrations/threat-intel");
+const mailer      = require("./mailer");
 const APP_VERSION = require("./package.json").version;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -198,6 +199,127 @@ function classifyHttp(method, urlPath, ua, req) {
   return "RECON";
 }
 
+// ─── Allowlist de IPs propias (v1.4.0) ───────────────────────────────────────
+// Cuando el equipo prueba el señuelo ensucia las métricas y, desde que existen las
+// alertas, además dispara avisos falsos. Estas IPs se siguen capturando pero
+// quedan marcadas como internas: no alertan y no entran en el informe.
+let ipAllowlist = [];
+
+function parsearAllowlist(texto) {
+  return String(texto || "")
+    .split(/[\s,;]+/).filter(Boolean)
+    .map(entrada => {
+      const [base, bitsStr] = entrada.split("/");
+      const bits = bitsStr === undefined ? 32 : parseInt(bitsStr, 10);
+      return Number.isInteger(bits) && bits >= 0 && bits <= 32 ? { base, bits } : null;
+    })
+    .filter(Boolean);
+}
+
+function ipANumero(ip) {
+  const p = String(ip || "").split(".");
+  if (p.length !== 4) return null;
+  let n = 0;
+  for (const o of p) { const v = Number(o); if (!Number.isInteger(v) || v < 0 || v > 255) return null; n = n * 256 + v; }
+  return n;
+}
+
+function esIpPropia(ip) {
+  if (!ipAllowlist.length) return false;
+  const a = ipANumero(ip);
+  if (a == null) return ipAllowlist.some(e => e.base === ip);
+  return ipAllowlist.some(({ base, bits }) => {
+    const b = ipANumero(base);
+    if (b == null) return false;
+    const mask = bits === 0 ? 0 : (-1 << (32 - bits)) >>> 0;
+    return ((a & mask) >>> 0) === ((b & mask) >>> 0);
+  });
+}
+
+async function cargarAllowlist() {
+  const row = await qRow("SELECT value FROM settings WHERE key_name = 'ip_allowlist'").catch(() => null);
+  ipAllowlist = parsearAllowlist(row?.value);
+}
+
+// ─── Alertas por mail (v1.4.0) ───────────────────────────────────────────────
+// Community avisa de lo que no se puede dejar pasar: un ataque crítico y el sensor
+// caído. Elegir por tipo de evento, el intervalo a medida y el enriquecimiento
+// automático son de la edición Pro.
+
+const ALERTAS_POR_DEFECTO = {
+  enabled: false,
+  host: "", port: 465, secure: true, user: "", pass: "", from: "",
+  recipients: "",
+  min_interval_min: 60,
+  watchdog_hours: 24,
+  panel_url: "",
+};
+
+const ultimaAlerta = {};
+
+async function getAlertConfig() {
+  const row = await qRow("SELECT value FROM settings WHERE key_name = 'alerts_config'");
+  let cfg = {};
+  try { cfg = row ? JSON.parse(row.value) : {}; } catch { cfg = {}; }
+  return { ...ALERTAS_POR_DEFECTO, ...cfg };
+}
+
+async function saveAlertConfig(cfg) {
+  const v = JSON.stringify(cfg);
+  await qRun("INSERT INTO settings (key_name, value) VALUES ('alerts_config', ?) ON DUPLICATE KEY UPDATE value = ?", [v, v]);
+}
+
+function sinPassword(cfg) {
+  const { pass, ...resto } = cfg;
+  return { ...resto, pass_set: !!pass };
+}
+
+async function dispararAlerta(disparo, alerta) {
+  try {
+    const cfg = await getAlertConfig();
+    if (!cfg.enabled || !cfg.host || !cfg.user || !cfg.recipients) return;
+    const ahora = Date.now();
+    const minimo = Math.max(1, Number(cfg.min_interval_min) || 60) * 60000;
+    if (ultimaAlerta[disparo] && ahora - ultimaAlerta[disparo] < minimo) return;
+    ultimaAlerta[disparo] = ahora;
+
+    const r = await mailer.enviarAlerta(cfg, { ...alerta, panelUrl: cfg.panel_url || undefined });
+    await qRun("INSERT INTO alert_log (trigger_type, subject, ok, error) VALUES (?,?,?,?)",
+      [disparo, alerta.titulo.slice(0, 190), r.ok ? 1 : 0, r.ok ? null : String(r.error || "").slice(0, 400)]).catch(() => {});
+    if (!r.ok) console.warn("[alertas]", disparo, r.error);
+  } catch (e) { console.warn("[alertas]", e.message); }
+}
+
+function evaluarAlertasDeEvento(ev) {
+  if (!ev || ev.internal) return;
+  if (ev.type !== "EXPLOIT" && ev.type !== "BRUTE") return;
+  const donde = `${ev.ip}${ev.country ? " (" + ev.country + ")" : ""}`;
+  dispararAlerta("critical", {
+    nivel: "critical",
+    titulo: ev.type === "EXPLOIT" ? "Intento de explotación contra el señuelo" : "Ataque de fuerza bruta contra el señuelo",
+    resumen: ev.type === "EXPLOIT"
+      ? "Alguien no está mirando, está intentando romper algo: se detectó un intento de explotación (inyección SQL, path traversal, ejecución remota o similar) contra el honeypot."
+      : "Se detectaron intentos repetidos de inicio de sesión con usuarios y contraseñas contra el honeypot.",
+    datos: [["IP", donde], ["Tipo", ev.type], ["Ruta", ev.path || "-"], ["Detalle", (ev.detail || "-").slice(0, 120)], ["Puntaje", ev.threat_score]],
+    accion: "Revisá si esa IP también aparece contra los servicios reales. Si el patrón se repite, bloqueala en el perímetro.",
+  });
+}
+
+async function revisarSensor() {
+  const cfg = await getAlertConfig();
+  if (!cfg.enabled) return;
+  const horas = Math.max(1, Number(cfg.watchdog_hours) || 24);
+  const row = await qRow("SELECT MAX(ts) AS ultimo, TIMESTAMPDIFF(HOUR, MAX(ts), NOW()) AS horas FROM events").catch(() => null);
+  if (!row || !row.ultimo || Number(row.horas) < horas) return;
+  await dispararAlerta("watchdog", {
+    nivel: "critical",
+    titulo: "El honeypot dejó de recibir tráfico",
+    resumen: `Hace ${row.horas} horas que no se registra un solo evento. Un honeypot expuesto a Internet recibe tráfico todo el tiempo, así que este silencio casi siempre significa que el sensor está caído o que algo delante dejó de enrutar.`,
+    datos: [["Último evento", new Date(row.ultimo).toISOString()], ["Horas sin tráfico", row.horas], ["Umbral configurado", `${horas} h`]],
+    accion: "Verificá que el proceso esté levantado y que el señuelo siga respondiendo.",
+  });
+}
+
 function threatScore(type) {
   // CRAWLER casi no puntúa: es Googlebot indexando o el monitoreo propio.
   // RESEARCH puntúa poco: Shodan y Censys catalogan lo expuesto, no atacan.
@@ -258,16 +380,19 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     port,
     ua:           (ua || "").slice(0, 300),
     signals:      signals || null,
+    internal:     esIpPropia(geo.ip) ? 1 : 0,
     threat_score: score,
     ts:           ts.toISOString(),
   };
   try {
     await qRun(
-      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ev.signals, ts]
+      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, internal, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ev.signals, ev.internal, ts]
     );
   } catch (e) { console.error("[log]", e.message); }
   io.emit("event", ev);
+  // Sin await: si el correo falla, el evento ya quedó guardado igual.
+  try { evaluarAlertasDeEvento(ev); } catch { /* nunca frena la captura */ }
   return ev;
 }
 
@@ -475,7 +600,9 @@ app.get("/heimdall/api/geo", authDash, async (req, res) => {
 app.get("/heimdall/api/report", authDash, async (req, res) => {
   try {
     const days = { "24h": 1, "7d": 7, "30d": 30 }[req.query.since] || null;
-    const tc = days ? `ts >= (NOW() - INTERVAL ${days} DAY)` : "1=1";
+    // El informe es lo que se muestra: el tráfico propio del equipo probando el
+    // señuelo queda afuera, si no las métricas mienten hacia arriba.
+    const tc = days ? `internal = 0 AND ts >= (NOW() - INTERVAL ${days} DAY)` : "internal = 0";
 
     const [[tot]] = await db.execute(`SELECT COUNT(*) AS events, COUNT(DISTINCT ip) AS ips, MIN(ts) AS first_seen, MAX(ts) AS last_seen FROM events WHERE ${tc}`);
     const byType    = await qRows(`SELECT type, COUNT(*) AS c, COUNT(DISTINCT ip) AS ips FROM events WHERE ${tc} GROUP BY type ORDER BY c DESC`);
@@ -814,6 +941,76 @@ app.delete("/heimdall/api/events", authDash, authAdmin, async (req, res) => {
 
 // Health check — no auth required (used by Docker smoke tests and monitoring)
 // Expone la versión para poder verificar un despliegue sin entrar al panel.
+// ─── Alertas y allowlist (v1.4.0) ────────────────────────────────────────────
+
+app.get("/heimdall/api/alerts/config", authDash, authAdmin, async (req, res) => {
+  res.json(sinPassword(await getAlertConfig()));
+});
+
+app.put("/heimdall/api/alerts/config", authDash, authAdmin, async (req, res) => {
+  const actual = await getAlertConfig();
+  const b = req.body || {};
+  const nueva = {
+    ...actual,
+    enabled: b.enabled !== undefined ? !!b.enabled : actual.enabled,
+    host: b.host ?? actual.host,
+    port: Number(b.port) || actual.port,
+    secure: b.secure !== undefined ? !!b.secure : actual.secure,
+    user: b.user ?? actual.user,
+    from: b.from ?? actual.from,
+    recipients: b.recipients ?? actual.recipients,
+    panel_url: b.panel_url ?? actual.panel_url,
+    min_interval_min: Math.max(1, Number(b.min_interval_min) || actual.min_interval_min),
+    watchdog_hours: Math.max(1, Number(b.watchdog_hours) || actual.watchdog_hours),
+    // La contraseña solo se pisa si mandan una nueva: la interfaz nunca la recibe.
+    pass: (b.pass !== undefined && b.pass !== "") ? b.pass : actual.pass,
+  };
+  await saveAlertConfig(nueva);
+  await logAudit(req.user.id, "alerts_config", `Alertas ${nueva.enabled ? "activadas" : "desactivadas"}`);
+  res.json(sinPassword(nueva));
+});
+
+app.post("/heimdall/api/alerts/test", authDash, authAdmin, async (req, res) => {
+  const cfg = await getAlertConfig();
+  if (!cfg.host || !cfg.user) return res.status(400).json({ error: "Falta configurar el servidor SMTP" });
+  if (!cfg.recipients)        return res.status(400).json({ error: "Falta cargar destinatarios" });
+
+  const verificacion = await mailer.probarSMTP(cfg);
+  if (!verificacion.ok) return res.status(502).json({ error: `No se pudo conectar: ${verificacion.error}` });
+
+  const r = await mailer.enviarAlerta(cfg, {
+    nivel: "info",
+    titulo: "Prueba de alertas de Heimdall",
+    resumen: "Si estás leyendo esto, las alertas quedaron configuradas y funcionando. Este correo se envió a mano desde la pantalla de Alertas, no lo disparó un ataque.",
+    datos: [["Servidor", `${cfg.host}:${cfg.port}`], ["Remitente", cfg.from || cfg.user], ["Destinatarios", cfg.recipients]],
+    accion: "No hace falta hacer nada. A partir de ahora vas a recibir un aviso ante un ataque crítico o si el sensor deja de recibir tráfico.",
+    panelUrl: cfg.panel_url || undefined,
+  });
+  await qRun("INSERT INTO alert_log (trigger_type, subject, ok, error) VALUES (?,?,?,?)",
+    ["test", "Prueba de alertas", r.ok ? 1 : 0, r.ok ? null : String(r.error || "").slice(0, 400)]).catch(() => {});
+  await logAudit(req.user.id, "alerts_test", r.ok ? "Correo de prueba enviado" : `Falló el envío: ${r.error}`);
+  if (!r.ok) return res.status(502).json({ error: r.error });
+  res.json({ ok: true });
+});
+
+app.get("/heimdall/api/alerts/log", authDash, authAdmin, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || "50"), 200);
+  res.json({ alerts: await qRows(`SELECT * FROM alert_log ORDER BY id DESC LIMIT ${limit}`) });
+});
+
+app.get("/heimdall/api/settings/ip-allowlist", authDash, authAdmin, async (req, res) => {
+  const row = await qRow("SELECT value FROM settings WHERE key_name = 'ip_allowlist'");
+  res.json({ value: row?.value || "", count: ipAllowlist.length });
+});
+
+app.put("/heimdall/api/settings/ip-allowlist", authDash, authAdmin, async (req, res) => {
+  const v = String(req.body?.value || "").slice(0, 4000);
+  await qRun("INSERT INTO settings (key_name, value) VALUES ('ip_allowlist', ?) ON DUPLICATE KEY UPDATE value = ?", [v, v]);
+  await cargarAllowlist();
+  await logAudit(req.user.id, "ip_allowlist", `Allowlist de IPs propias: ${ipAllowlist.length} entradas`);
+  res.json({ value: v, count: ipAllowlist.length });
+});
+
 app.get("/heimdall/api/health", (req, res) => res.json({ ok: true, version: APP_VERSION }));
 
 // Serve dashboard frontend
@@ -900,6 +1097,7 @@ async function initDB() {
     lon          DECIMAL(8,5),
     type         ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN','EXPLOIT','CRAWLER','RESEARCH') NOT NULL,
     signals      VARCHAR(80) DEFAULT NULL,
+    internal     TINYINT(1)  NOT NULL DEFAULT 0,
     method       VARCHAR(10),
     path         VARCHAR(500),
     detail       TEXT,
@@ -932,6 +1130,7 @@ async function initDB() {
   try { await qRun("ALTER TABLE events ADD COLUMN lon DECIMAL(8,5) DEFAULT NULL"); } catch {}
   // Migraciones additivas de la v1.3.0: categorías nuevas y señales de navegador
   try { await qRun("ALTER TABLE events ADD COLUMN signals VARCHAR(80) DEFAULT NULL"); } catch {}
+  try { await qRun("ALTER TABLE events ADD COLUMN internal TINYINT(1) NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE events MODIFY COLUMN type ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN','EXPLOIT','CRAWLER','RESEARCH') NOT NULL"); } catch {}
 
   await qRun(`CREATE TABLE IF NOT EXISTS audit_log (
@@ -946,6 +1145,16 @@ async function initDB() {
   // Caché de threat intel por IP. Community usa solo las fuentes sin clave; las
   // columnas de las fuentes con cuenta quedan definidas igual para no divergir del
   // esquema de la edición Pro, y simplemente van vacías.
+  await qRun(`CREATE TABLE IF NOT EXISTS alert_log (
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ts           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    trigger_type VARCHAR(30) NOT NULL,
+    subject      VARCHAR(200),
+    ok           TINYINT(1) DEFAULT 0,
+    error        VARCHAR(400),
+    INDEX idx_ts (ts)
+  ) ENGINE=InnoDB CHARSET=utf8mb4`);
+
   await qRun(`CREATE TABLE IF NOT EXISTS ip_intel (
     ip            VARCHAR(45)  PRIMARY KEY,
     asn           INT,
@@ -990,6 +1199,9 @@ async function initDB() {
   }
   await trimEvents();
   setInterval(trimEvents, 60 * 60 * 1000); // cada hora
+
+  await cargarAllowlist();
+  setInterval(() => { revisarSensor().catch(() => {}); }, 15 * 60 * 1000);
 
   // Backfill de coordenadas para eventos históricos (geoip-lite es local, sin costo).
   async function backfillGeo() {

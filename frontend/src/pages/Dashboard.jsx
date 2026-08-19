@@ -11,6 +11,7 @@ import TerminalCard from '../components/TerminalCard'
 import EventTable from '../components/EventTable'
 import IpListView from '../components/IpListView'
 import IpProfile from '../components/IpProfile'
+import Alertas from './Alertas'
 import Mapa from './Mapa'
 import Guia from './Guia'
 import Reportes from './Reportes'
@@ -238,6 +239,13 @@ export default function Dashboard({ token, onLogout }) {
             {tab === 'mi_cuenta' && (
               <MiCuenta token={token} userInfo={userInfo} />
             )}
+
+            {tab === 'alertas' && userInfo?.role === 'admin' && (
+
+              <Alertas token={token} />
+
+            )}
+
 
             {tab === 'usuarios' && (
               <Usuarios token={token} role={userInfo?.role} />

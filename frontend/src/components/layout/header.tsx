@@ -28,6 +28,7 @@ export function Header({ tab, username, nombre, role, onMiCuenta, onLogout, conn
     ips:      t('page.ips'),
     map:      t('page.map'),
     guia:     t('page.guide'),
+    alertas:  t('page.alerts'),
     reportes: t('page.reports'),
     senualos: t('page.senualos'),
   }
@@ -58,13 +59,13 @@ export function Header({ tab, username, nombre, role, onMiCuenta, onLogout, conn
           </h1>
         </div>
         <div className='ml-auto flex items-center gap-2'>
-          {!['mi_cuenta', 'usuarios', 'auditoria'].includes(tab) && activeTemplate && (
+          {!['mi_cuenta', 'usuarios', 'auditoria', 'alertas'].includes(tab) && activeTemplate && (
             <div className='hidden sm:flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full border font-terminal border-green-500/30 bg-green-500/10 text-green-400'>
               <span className='w-1.5 h-1.5 rounded-full bg-green-400' />
               {TEMPLATE_MAP[activeTemplate]?.name ?? activeTemplate}
             </div>
           )}
-          {!['mi_cuenta', 'usuarios', 'auditoria'].includes(tab) && connected !== undefined && (
+          {!['mi_cuenta', 'usuarios', 'auditoria', 'alertas'].includes(tab) && connected !== undefined && (
             <div className={cn(
               'hidden sm:flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full border font-terminal mr-1',
               connected
@@ -75,7 +76,7 @@ export function Header({ tab, username, nombre, role, onMiCuenta, onLogout, conn
               {connected ? t('header.live') : t('header.disconnected')}
             </div>
           )}
-          {!['mi_cuenta', 'usuarios', 'auditoria'].includes(tab) && extraRight}
+          {!['mi_cuenta', 'usuarios', 'auditoria', 'alertas'].includes(tab) && extraRight}
           <ThemeSwitch />
           <ProfileDropdown
               username={username}

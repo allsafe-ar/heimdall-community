@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { ChevronsUpDown, UserCog, Bug, Settings2 } from 'lucide-react'
+import { ChevronsUpDown, UserCog, Bug, Settings2, Bell } from 'lucide-react'
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -81,6 +81,16 @@ export function NavUser({ role, onTabChange }: Props) {
             <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>
               {t('nav.config')}
             </div>
+
+            {isAdmin && (
+              <button
+                className='relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground'
+                onClick={() => navigate('alertas')}
+              >
+                <Bell className='size-4 text-muted-foreground shrink-0' />
+                {t('nav.alerts')}
+              </button>
+            )}
 
             {isAdmin && (
               <button

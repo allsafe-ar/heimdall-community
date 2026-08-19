@@ -36,6 +36,8 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **Threat intel sin clave** - Enriquecimiento por IP con ASN (Team Cymru), nodos de salida de Tor, FeodoTracker y C2-Tracker. Sin API key y sin configuración
 - **Perfil de IP** - Línea de tiempo de la IP, rutas pedidas, credenciales capturadas y threat intel
 - **Ayuda contextual** - Un botón de ayuda en cada pantalla que explica qué es y qué hacer
+- **Alertas por correo** - Un aviso cuando un ataque crítico llega al señuelo, y cuando el sensor deja de recibir tráfico
+- **Allowlist de IPs propias** - Para que el equipo probando el señuelo no ensucie las métricas ni dispare alertas falsas
 - **Dashboard en tiempo real** - Feed de eventos en vivo via WebSocket con pause/resume sin perder eventos
 - **Cyber Attack Map** - Mapa mundial en tiempo real con el origen de los ataques y arcos animados que viajan hacia el host defendido
 - **Lista de IPs** - Vista agregada de IPs atacantes con conteo de hits y geolocalización
@@ -68,6 +70,8 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Perfil de IP (línea de tiempo, rutas pedidas y credenciales capturadas) | ✅ | ✅ |
 | Threat intel, fuentes sin clave (ASN, nodos de salida de Tor, FeodoTracker, C2-Tracker), de a una IP | ✅ | ✅ |
 | Ayuda contextual en cada pantalla | ✅ | ✅ |
+| Alertas por correo ante ataque crítico y ante sensor caído | ✅ | ✅ |
+| Allowlist de IPs propias (quedan fuera de las alertas y del informe) | ✅ | ✅ |
 | Historial de eventos, estadísticas y geolocalización de IPs | ✅ | ✅ |
 | TOTP 2FA + lockout de cuenta | ✅ | ✅ |
 | Tema Dark / Light / Sistema | ✅ | ✅ |
@@ -86,6 +90,9 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Reputación derivada en el dashboard y badges por IP | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Branding personalizado (logo de organización) | ❌ | ✅ |
+| Personalización de alertas: por tipo de evento, visitas humanas, campañas, credenciales capturadas | ❌ | ✅ |
+| Enriquecimiento automático de threat intel por tipo de evento | ❌ | ✅ |
+| Feed de bloqueo (URL con token para firewall / nginx / fail2ban) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
 
 

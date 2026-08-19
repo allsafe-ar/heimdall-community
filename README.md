@@ -36,6 +36,8 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **Threat intelligence (keyless)** - Per-IP enrichment with ASN (Team Cymru), Tor exit nodes, FeodoTracker and C2-Tracker. No API key, no setup
 - **IP profile** - Per-IP attack timeline, requested paths, captured credentials and threat intel
 - **Contextual help** - A help button on every screen explaining what it is and what to do
+- **Email alerts** - A notice when a critical attack hits the decoy, and when the sensor stops receiving traffic at all
+- **Allowlist of your own IPs** - So your team testing the decoy does not pollute the metrics or fire false alerts
 - **Real-time dashboard** - Live event feed via WebSocket with pause/resume without missing events
 - **Cyber Attack Map** - Real-time world map of attack origins with animated attack arcs converging on the defended host
 - **IP list** - Aggregated view of attacking IPs with hit counts and geolocation
@@ -68,6 +70,8 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | IP profile (per-IP attack timeline, paths and captured credentials) | ✅ | ✅ |
 | Threat intel, keyless sources (ASN, Tor exit nodes, FeodoTracker, C2-Tracker), one IP at a time | ✅ | ✅ |
 | Contextual help on every screen | ✅ | ✅ |
+| Email alerts for a critical attack and for the sensor going quiet | ✅ | ✅ |
+| Allowlist of your own IPs (kept out of alerts and the report) | ✅ | ✅ |
 | Event history, statistics & IP geolocation | ✅ | ✅ |
 | TOTP 2FA + account lockout | ✅ | ✅ |
 | Dark / Light / System theme | ✅ | ✅ |
@@ -86,6 +90,9 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | Derived reputation on the dashboard and IP badges | ❌ | ✅ |
 | Audit log | ❌ | ✅ |
 | Custom branding (organization logo) | ❌ | ✅ |
+| Alert customisation: by event type, human visits, campaigns, captured credentials | ❌ | ✅ |
+| Automatic threat intel enrichment by event type | ❌ | ✅ |
+| Blocklist feed (token URL for firewall / nginx / fail2ban) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
 
 
