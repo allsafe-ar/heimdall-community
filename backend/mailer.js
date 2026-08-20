@@ -9,6 +9,26 @@
 // servidor de correo es el del cliente. La contraseña se guarda del lado del
 // servidor y nunca se devuelve a la interfaz.
 const nodemailer = require("nodemailer");
+const fs   = require("fs");
+const path = require("path");
+
+// Logo de la marca para el encabezado. Va embebido como cid: y no como URL remota:
+// Gmail y Outlook bloquean las imágenes remotas por defecto. El archivo está aplanado
+// sobre blanco y sin canal alfa a propósito, porque Outlook renderiza con el motor de
+// Word y pinta de negro los fondos transparentes.
+const LOGO_CID  = "allsafe-logo";
+const LOGO_PATH = path.join(__dirname, "assets", "allsafe-mail.png");
+
+// Se lee una sola vez y se cachea. Si el archivo no está, el correo sale sin logo en
+// vez de fallar: avisar es lo que no se puede dejar de hacer.
+let logoCache;
+function leerLogo() {
+  if (logoCache === undefined) {
+    try { logoCache = fs.readFileSync(LOGO_PATH); }
+    catch { logoCache = null; }
+  }
+  return logoCache;
+}
 
 const NAVY   = "#0f1e50";  // el mismo navy de los informes PDF
 const ACCENT = "#0064d2";
@@ -37,7 +57,7 @@ function esc(s) {
  * @param {string} a.host        Dominio o nombre del honeypot
  * @param {string} a.panelUrl    Link al panel
  */
-function construirHTML(a) {
+function construirHTML(a, conLogo = false) {
   const n = NIVELES[a.nivel] || NIVELES.info;
   const filas = (a.datos || []).map(([k, v]) => `
     <tr>
@@ -51,9 +71,20 @@ function construirHTML(a) {
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
 
-        <tr><td style="background:${NAVY};padding:18px 24px">
-          <div style="color:#ffffff;font-size:16px;font-weight:700;letter-spacing:.2px">Heimdall</div>
-          <div style="color:#a0b9e1;font-size:12px;margin-top:2px">AllSafe Security Solutions${a.host ? " · " + esc(a.host) : ""}</div>
+        <tr><td style="background:${NAVY};padding:16px 24px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="left" style="vertical-align:middle">
+                <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:.2px">Heimdall</div>
+                <div style="color:#a0b9e1;font-size:12px;margin-top:3px">${conLogo ? esc(a.host || "") : "AllSafe Security Solutions" + (a.host ? " · " + esc(a.host) : "")}</div>
+              </td>
+              <td align="right" style="vertical-align:middle">
+                ${conLogo ? `<table role="presentation" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:5px"><tr><td style="padding:7px 10px;line-height:0">
+                  <img src="cid:${LOGO_CID}" width="150" height="55" alt="AllSafe Security Solutions" style="display:block;border:0;outline:none;text-decoration:none">
+                </td></tr></table>` : ""}
+              </td>
+            </tr>
+          </table>
         </td></tr>
         <tr><td style="background:${ACCENT};height:3px;font-size:0;line-height:0">&nbsp;</td></tr>
 
@@ -84,7 +115,7 @@ function construirHTML(a) {
 
         <tr><td style="padding:22px 24px 20px">
           <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.6;border-top:1px solid #e5e7eb;padding-top:14px">
-            Alerta automática de Heimdall. Se envía según lo configurado en Alertas, con un intervalo mínimo entre avisos para no saturar la casilla.
+            Alerta automática de Heimdall · AllSafe Security Solutions. Se envía según lo configurado en Alertas, con un intervalo mínimo entre avisos para no saturar la casilla.
           </p>
         </td></tr>
 
@@ -131,13 +162,17 @@ async function enviarAlerta(cfg, alerta) {
     const destinatarios = (cfg.recipients || "").split(/[,;\s]+/).filter(Boolean);
     if (!destinatarios.length) return { ok: false, error: "Sin destinatarios" };
 
+    const logo = leerLogo();
     const t = crearTransporte(cfg);
     await t.sendMail({
       from: cfg.from || cfg.user,
       to: destinatarios.join(", "),
       subject: `[Heimdall] ${alerta.titulo}`,
       text: construirTexto(alerta),
-      html: construirHTML(alerta),
+      html: construirHTML(alerta, !!logo),
+      attachments: logo
+        ? [{ filename: "allsafe.png", content: logo, cid: LOGO_CID, contentDisposition: "inline" }]
+        : [],
     });
     return { ok: true };
   } catch (e) {
