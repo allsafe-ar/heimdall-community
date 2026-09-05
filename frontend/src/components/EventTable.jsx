@@ -57,19 +57,19 @@ export default function EventTable({ token, refreshTick }) {
     <div className="flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-wrap">
-        <span className="text-zinc-400 text-sm font-medium">{t('nav.table')}</span>
+        <span className="text-muted-foreground text-sm font-medium">{t('nav.table')}</span>
         <div className="flex items-center gap-2 ml-auto flex-wrap">
           <input
             type="text"
             placeholder={t('events.filter_ip')}
             value={ipFilter}
             onChange={e => onFilterChange(setIpFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-red-600/50 w-36 font-terminal"
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-36 font-terminal"
           />
           <select
             value={typeFilter}
             onChange={e => onFilterChange(setTypeFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {TYPES.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -78,7 +78,7 @@ export default function EventTable({ token, refreshTick }) {
           <button
             onClick={load}
             disabled={loading}
-            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-sm transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 bg-muted hover:bg-accent text-foreground rounded text-sm transition-colors disabled:opacity-50"
           >
             {loading ? '...' : '↺'}
           </button>
@@ -90,18 +90,18 @@ export default function EventTable({ token, refreshTick }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_timestamp')}</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_type')}</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_ip')}</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_geo')}</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_detail')}</th>
-              <th className="text-right px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">{t('events.col_score')}</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_timestamp')}</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_type')}</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_ip')}</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_geo')}</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_detail')}</th>
+              <th className="text-right px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">{t('events.col_score')}</th>
             </tr>
           </thead>
           <tbody>
             {events.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-zinc-700 font-terminal text-sm">
+                <td colSpan={6} className="text-center py-12 text-muted-foreground font-terminal text-sm">
                   {loading ? t('usuarios.loading') : t('auditoria.no_data')}
                 </td>
               </tr>
@@ -119,7 +119,7 @@ export default function EventTable({ token, refreshTick }) {
                   key={ev.id ?? i}
                   className="border-b border-border hover:bg-muted/30 transition-colors"
                 >
-                  <td className="px-4 py-2.5 font-terminal text-xs text-zinc-500 whitespace-nowrap">
+                  <td className="px-4 py-2.5 font-terminal text-xs text-muted-foreground whitespace-nowrap">
                     {fmtDateTime(ev.ts)}
                   </td>
                   <td className="px-4 py-2.5">
@@ -129,15 +129,15 @@ export default function EventTable({ token, refreshTick }) {
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="font-terminal text-xs text-zinc-300">
+                    <span className="font-terminal text-xs text-foreground">
                       {ev.ip}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-zinc-500 text-xs whitespace-nowrap">
+                  <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">
                     {ev.flag && <span className="mr-1">{ev.flag}</span>}
                     {ev.country || '—'}{ev.city ? ` · ${ev.city}` : ''}
                   </td>
-                  <td className="px-4 py-2.5 font-terminal text-xs text-zinc-500 max-w-[240px] truncate">
+                  <td className="px-4 py-2.5 font-terminal text-xs text-muted-foreground max-w-[240px] truncate">
                     {detail}
                   </td>
                   <td className="px-4 py-2.5 text-right">
@@ -159,21 +159,21 @@ export default function EventTable({ token, refreshTick }) {
       {/* Pagination */}
       {pages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-          <span className="text-zinc-600 text-xs font-terminal">
+          <span className="text-muted-foreground text-xs font-terminal">
             {t('stats.events_count', { count: total.toLocaleString() })} · {t('auditoria.page', { page: page + 1, total: pages })}
           </span>
           <div className="flex gap-1">
             <button
               onClick={() => setPage(0)}
               disabled={page === 0}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               «
             </button>
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ‹
             </button>
@@ -186,7 +186,7 @@ export default function EventTable({ token, refreshTick }) {
                   className={`px-2.5 py-1 text-xs font-terminal rounded transition-colors ${
                     p === page
                       ? 'bg-red-600/20 text-red-400 border border-red-600/30'
-                      : 'text-zinc-600 hover:text-zinc-300'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {p + 1}
@@ -196,14 +196,14 @@ export default function EventTable({ token, refreshTick }) {
             <button
               onClick={() => setPage(p => Math.min(pages - 1, p + 1))}
               disabled={page >= pages - 1}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ›
             </button>
             <button
               onClick={() => setPage(pages - 1)}
               disabled={page >= pages - 1}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               »
             </button>

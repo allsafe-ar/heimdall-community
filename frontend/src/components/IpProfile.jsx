@@ -76,13 +76,13 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
             {data && (
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-lg">{data.flag || '🌐'}</span>
-                <span className="text-zinc-400 text-sm">{data.country || 'Unknown'}{data.city ? ` · ${data.city}` : ''}</span>
+                <span className="text-muted-foreground text-sm">{data.country || 'Unknown'}{data.city ? ` · ${data.city}` : ''}</span>
               </div>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-600 hover:text-white transition-colors text-xl w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-800"
+            className="text-muted-foreground hover:text-white transition-colors text-xl w-8 h-8 flex items-center justify-center rounded hover:bg-muted"
           >
             ✕
           </button>
@@ -90,25 +90,25 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="font-terminal text-zinc-600 text-sm animate-pulse tracking-widest">CARGANDO...</div>
+            <div className="font-terminal text-muted-foreground text-sm animate-pulse tracking-widest">CARGANDO...</div>
           </div>
         ) : data ? (
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
             {/* Threat summary */}
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="text-zinc-500 text-xs uppercase tracking-widest mb-3">Resumen de amenaza</div>
+              <div className="text-muted-foreground text-xs uppercase tracking-widest mb-3">Resumen de amenaza</div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <div className={`text-2xl font-bold ${threat?.color}`}>{threat?.label}</div>
-                  <div className="text-zinc-600 text-xs mt-0.5">Nivel</div>
+                  <div className="text-muted-foreground text-xs mt-0.5">Nivel</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white">{data.total_events || 0}</div>
-                  <div className="text-zinc-600 text-xs mt-0.5">Eventos</div>
+                  <div className="text-muted-foreground text-xs mt-0.5">Eventos</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white">{data.max_score || 0}</div>
-                  <div className="text-zinc-600 text-xs mt-0.5">Score máx.</div>
+                  <div className="text-muted-foreground text-xs mt-0.5">Score máx.</div>
                 </div>
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
             {/* Type breakdown for this IP */}
             {data.by_type && Object.keys(data.by_type).length > 0 && (
               <div className="bg-card border border-border rounded-lg p-4">
-                <div className="text-zinc-500 text-xs uppercase tracking-widest mb-3">Actividad por tipo</div>
+                <div className="text-muted-foreground text-xs uppercase tracking-widest mb-3">Actividad por tipo</div>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(data.by_type).map(([type, count]) => {
                     const meta = getMeta(type)
@@ -136,7 +136,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
             {/* Timeline */}
             {data.events?.length > 0 && (
               <div className="bg-card border border-border rounded-lg p-4">
-                <div className="text-zinc-500 text-xs uppercase tracking-widest mb-3">
+                <div className="text-muted-foreground text-xs uppercase tracking-widest mb-3">
                   Últimos {data.events.length} eventos
                 </div>
                 <div className="flex flex-col gap-0">
@@ -149,13 +149,13 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                           <div className="flex items-center gap-2">
                             <span className={`font-terminal text-[11px] ${meta.color}`}>{ev.type}</span>
                             {ev.path && (
-                              <span className="text-zinc-500 text-xs truncate">{ev.path}</span>
+                              <span className="text-muted-foreground text-xs truncate">{ev.path}</span>
                             )}
                             {ev.ports && (
-                              <span className="text-zinc-500 text-xs">[{ev.ports.join(',')}]</span>
+                              <span className="text-muted-foreground text-xs">[{ev.ports.join(',')}]</span>
                             )}
                             {ev.port && !ev.path && (
-                              <span className="text-zinc-500 text-xs">:{ev.port}</span>
+                              <span className="text-muted-foreground text-xs">:{ev.port}</span>
                             )}
                           </div>
                           {(ev.type === 'BRUTE' || ev.type === 'HUMAN') && ev.detail && (
@@ -163,7 +163,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                               → {ev.detail}
                             </div>
                           )}
-                          <div className="text-zinc-700 text-[10px] font-terminal mt-0.5">
+                          <div className="text-muted-foreground text-[10px] font-terminal mt-0.5">
                             {fmtDateTime(ev.ts)}
                           </div>
                         </div>
@@ -177,7 +177,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
             {/* Threat Intel */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-zinc-500 text-xs uppercase tracking-widest flex items-center gap-2">
+                <div className="text-muted-foreground text-xs uppercase tracking-widest flex items-center gap-2">
                   Threat Intel
                   <HelpTip side='left' title={t('help.threatintel.t')} description={t('help.threatintel.d')}
                     tips={[t('help.threatintel.k1'), t('help.threatintel.k2'), t('help.threatintel.k3')]} />
@@ -186,7 +186,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                   <button
                     onClick={enrich}
                     disabled={enriching}
-                    className="text-xs px-2.5 py-1 rounded-md border border-border text-zinc-300 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-md border border-border text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
                   >
                     {enriching ? 'Analizando…' : data.intel ? 'Actualizar' : 'Enriquecer'}
                   </button>
@@ -206,31 +206,31 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                     {data.intel.feodo_malware && (
                       <span className="text-xs px-2 py-1 rounded-full border border-red-400/40 text-red-300 bg-red-400/10">{data.intel.feodo_malware}</span>
                     )}
-                    <span className="text-zinc-500 text-xs ml-auto">
-                      Intel score: <span className="text-zinc-200 font-medium">{data.intel.intel_score}</span>
+                    <span className="text-muted-foreground text-xs ml-auto">
+                      Intel score: <span className="text-foreground font-medium">{data.intel.intel_score}</span>
                     </span>
                   </div>
 
                   {(data.intel.asn || data.intel.as_org) && (
                     <div className="text-xs flex gap-2">
-                      <span className="text-zinc-600 shrink-0">ASN</span>
-                      <span className="text-zinc-300">
+                      <span className="text-muted-foreground shrink-0">ASN</span>
+                      <span className="text-foreground">
                         {data.intel.asn ? `AS${data.intel.asn}` : ''}{data.intel.as_org ? ` · ${data.intel.as_org}` : ''}
                       </span>
                     </div>
                   )}
 
                   {data.intel.enriched_at && (
-                    <div className="text-zinc-700 text-[10px] font-terminal">Enriquecido: {fmtDateTime(data.intel.enriched_at)}</div>
+                    <div className="text-muted-foreground text-[10px] font-terminal">Enriquecido: {fmtDateTime(data.intel.enriched_at)}</div>
                   )}
 
-                  <div className="text-zinc-600 text-[10px] border-t border-border pt-2">
+                  <div className="text-muted-foreground text-[10px] border-t border-border pt-2">
                     Fuentes sin clave: ASN (Team Cymru), nodos de salida de Tor, FeodoTracker y C2-Tracker.
                     AbuseIPDB, Shodan y GreyNoise, el análisis en lote y el automático están en la edición Pro.
                   </div>
                 </div>
               ) : (
-                <div className="text-zinc-600 text-xs">
+                <div className="text-muted-foreground text-xs">
                   {isAdmin
                     ? 'IP sin enriquecer. Consultá el ASN, si es un nodo de salida de Tor y si figura en los feeds de C2 y botnets.'
                     : 'IP sin enriquecer.'}
@@ -241,18 +241,18 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
             {/* First / last seen */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card border border-border rounded-lg p-3">
-                <div className="text-zinc-600 text-xs mb-1">Primera vez</div>
-                <div className="font-terminal text-xs text-zinc-300">{fmtDateTime(data.first_seen)}</div>
+                <div className="text-muted-foreground text-xs mb-1">Primera vez</div>
+                <div className="font-terminal text-xs text-foreground">{fmtDateTime(data.first_seen)}</div>
               </div>
               <div className="bg-card border border-border rounded-lg p-3">
-                <div className="text-zinc-600 text-xs mb-1">Última vez</div>
-                <div className="font-terminal text-xs text-zinc-300">{fmtDateTime(data.last_seen)}</div>
+                <div className="text-muted-foreground text-xs mb-1">Última vez</div>
+                <div className="font-terminal text-xs text-foreground">{fmtDateTime(data.last_seen)}</div>
               </div>
             </div>
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <div className="font-terminal text-zinc-600 text-sm">Sin datos para esta IP</div>
+            <div className="font-terminal text-muted-foreground text-sm">Sin datos para esta IP</div>
           </div>
         )}
       </div>

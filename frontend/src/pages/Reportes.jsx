@@ -173,7 +173,7 @@ export default function Reportes({ token }) {
             <div className='flex flex-wrap gap-2'>
               {data.credentials.slice(0, 12).map((c, i) => (
                 <span key={i} className='text-xs font-terminal px-2 py-1 rounded border border-border text-muted-foreground'>
-                  {c.credential} <span className='text-zinc-600'>· {c.count}× ({c.ips} IPs)</span>
+                  {c.credential} <span className='text-muted-foreground'>· {c.count}× ({c.ips} IPs)</span>
                 </span>
               ))}
             </div>

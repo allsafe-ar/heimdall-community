@@ -63,7 +63,7 @@ export default function IpListView({ token, onIpClick }) {
     <div className="flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-wrap">
-        <span className="text-zinc-400 text-sm font-medium">
+        <span className="text-muted-foreground text-sm font-medium">
           {total.toLocaleString()} IPs registradas
         </span>
         <div className="flex items-center gap-2 ml-auto flex-wrap">
@@ -73,12 +73,12 @@ export default function IpListView({ token, onIpClick }) {
             value={countryFilter}
             onChange={e => resetAndSet(setCountryFilter)(e.target.value)}
             maxLength={2}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-red-600/50 w-28 font-terminal uppercase"
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-28 font-terminal uppercase"
           />
           <select
             value={typeFilter}
             onChange={e => resetAndSet(setTypeFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {TYPE_FILTERS.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -87,7 +87,7 @@ export default function IpListView({ token, onIpClick }) {
           <select
             value={sort}
             onChange={e => { setSort(e.target.value); setPage(0) }}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {SORT_OPTIONS.map(s => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -96,7 +96,7 @@ export default function IpListView({ token, onIpClick }) {
           <button
             onClick={load}
             disabled={loading}
-            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-sm transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 bg-muted hover:bg-accent text-foreground rounded text-sm transition-colors disabled:opacity-50"
           >
             {loading ? '...' : '↺'}
           </button>
@@ -108,18 +108,18 @@ export default function IpListView({ token, onIpClick }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">IP Origen</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">País</th>
-              <th className="text-right px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">Eventos</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">Tipos de ataque</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">Primera vez</th>
-              <th className="text-left px-4 py-2.5 text-zinc-600 font-medium text-xs uppercase tracking-wider">Última actividad</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">IP Origen</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">País</th>
+              <th className="text-right px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">Eventos</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">Tipos de ataque</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">Primera vez</th>
+              <th className="text-left px-4 py-2.5 text-muted-foreground font-medium text-xs uppercase tracking-wider">Última actividad</th>
             </tr>
           </thead>
           <tbody>
             {ips.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-16 text-zinc-700 font-terminal text-sm">
+                <td colSpan={6} className="text-center py-16 text-muted-foreground font-terminal text-sm">
                   {loading ? 'Cargando...' : 'Sin IPs registradas'}
                 </td>
               </tr>
@@ -132,19 +132,19 @@ export default function IpListView({ token, onIpClick }) {
                   {onIpClick ? (
                     <button
                       onClick={() => onIpClick(row.ip)}
-                      className="font-terminal text-sm text-zinc-200 hover:text-primary transition-colors"
+                      className="font-terminal text-sm text-foreground hover:text-primary transition-colors"
                       title="Ver perfil de la IP"
                     >
                       {row.ip}
                     </button>
                   ) : (
-                    <span className="font-terminal text-sm text-zinc-200">{row.ip}</span>
+                    <span className="font-terminal text-sm text-foreground">{row.ip}</span>
                   )}
                 </td>
-                <td className="px-4 py-2.5 text-zinc-400 text-xs whitespace-nowrap">
+                <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">
                   <span className="mr-1">{row.flag}</span>
                   {row.country}
-                  {row.city ? <span className="text-zinc-600"> · {row.city}</span> : null}
+                  {row.city ? <span className="text-muted-foreground"> · {row.city}</span> : null}
                 </td>
                 <td className="px-4 py-2.5 text-right">
                   <span className="font-terminal text-base font-bold text-white">{row.hits.toLocaleString()}</span>
@@ -164,10 +164,10 @@ export default function IpListView({ token, onIpClick }) {
                     })}
                   </div>
                 </td>
-                <td className="px-4 py-2.5 font-terminal text-xs text-zinc-600 whitespace-nowrap">
+                <td className="px-4 py-2.5 font-terminal text-xs text-muted-foreground whitespace-nowrap">
                   {fmtDateTime(row.first_seen)}
                 </td>
-                <td className="px-4 py-2.5 font-terminal text-xs text-zinc-500 whitespace-nowrap">
+                <td className="px-4 py-2.5 font-terminal text-xs text-muted-foreground whitespace-nowrap">
                   {fmtDateTime(row.last_seen)}
                 </td>
               </tr>
@@ -179,18 +179,18 @@ export default function IpListView({ token, onIpClick }) {
       {/* Pagination */}
       {pages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-          <span className="text-zinc-600 text-xs font-terminal">
+          <span className="text-muted-foreground text-xs font-terminal">
             {total.toLocaleString()} IPs · pág {page + 1}/{pages}
           </span>
           <div className="flex gap-1">
             <button onClick={() => setPage(0)} disabled={page === 0}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed">«</button>
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">«</button>
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
             <button onClick={() => setPage(p => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">›</button>
             <button onClick={() => setPage(pages - 1)} disabled={page >= pages - 1}
-              className="px-2 py-1 text-xs font-terminal text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed">»</button>
+              className="px-2 py-1 text-xs font-terminal text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">»</button>
           </div>
         </div>
       )}
