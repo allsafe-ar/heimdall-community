@@ -120,8 +120,8 @@ export function AppTitle({ token, onGoHome }: Props) {
         >
           {/* Exact same structure as Gjallarhorn's DropdownMenuContent */}
           <div style={{
-            background: 'oklch(0.14 0.025 264)',
-            border: '1px solid oklch(1 0 0 / 9%)',
+            background: 'var(--popover)',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             boxShadow: '0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3)',
             padding: '4px',
@@ -132,7 +132,7 @@ export function AppTitle({ token, onGoHome }: Props) {
               padding: '6px 8px',
               fontSize: 12,
               fontWeight: 600,
-              color: 'oklch(0.58 0.035 260)',
+              color: 'var(--muted-foreground)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
             }}>
@@ -152,16 +152,16 @@ export function AppTitle({ token, onGoHome }: Props) {
                   gap: 8,
                   padding: '6px 8px',
                   fontSize: 14,
-                  color: 'oklch(0.96 0.005 250)',
+                  color: 'var(--popover-foreground)',
                   textDecoration: 'none',
                   borderRadius: 4,
                   cursor: 'pointer',
                   outline: 'none',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.19 0.028 264)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <ExternalLink size={16} style={{ flexShrink: 0, color: 'oklch(0.58 0.035 260)' }} />
+                <ExternalLink size={16} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
                 {label}
               </a>
             ))}
