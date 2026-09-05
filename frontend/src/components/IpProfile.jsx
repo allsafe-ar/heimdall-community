@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next'
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 
 const REPUTACION = {
-  malicious:  { label: 'Maliciosa',  cls: 'border-red-400/40 text-red-300 bg-red-400/10' },
-  tor:        { label: 'Tor',        cls: 'border-purple-400/40 text-purple-300 bg-purple-400/10' },
-  suspicious: { label: 'Sospechosa', cls: 'border-yellow-400/40 text-yellow-300 bg-yellow-400/10' },
-  clean:      { label: 'Limpia',     cls: 'border-green-400/40 text-green-300 bg-green-400/10' },
+  malicious:  { label: 'Maliciosa',  cls: 'border-red-400/40 text-red-700 dark:text-red-300 bg-red-400/10' },
+  tor:        { label: 'Tor',        cls: 'border-purple-400/40 text-purple-700 dark:text-purple-300 bg-purple-400/10' },
+  suspicious: { label: 'Sospechosa', cls: 'border-yellow-400/40 text-yellow-700 dark:text-yellow-300 bg-yellow-400/10' },
+  clean:      { label: 'Limpia',     cls: 'border-green-400/40 text-green-700 dark:text-green-300 bg-green-400/10' },
 }
 
 export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
@@ -201,10 +201,10 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                       return <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${rep.cls}`}>{rep.label}</span>
                     })()}
                     {data.intel.is_tor && (
-                      <span className="text-xs px-2 py-1 rounded-full border border-purple-400/40 text-purple-300 bg-purple-400/10">Nodo de salida Tor</span>
+                      <span className="text-xs px-2 py-1 rounded-full border border-purple-400/40 text-purple-700 dark:text-purple-300 bg-purple-400/10">Nodo de salida Tor</span>
                     )}
                     {data.intel.feodo_malware && (
-                      <span className="text-xs px-2 py-1 rounded-full border border-red-400/40 text-red-300 bg-red-400/10">{data.intel.feodo_malware}</span>
+                      <span className="text-xs px-2 py-1 rounded-full border border-red-400/40 text-red-700 dark:text-red-300 bg-red-400/10">{data.intel.feodo_malware}</span>
                     )}
                     <span className="text-muted-foreground text-xs ml-auto">
                       Intel score: <span className="text-foreground font-medium">{data.intel.intel_score}</span>

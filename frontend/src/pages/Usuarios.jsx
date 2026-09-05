@@ -239,7 +239,7 @@ export default function Usuarios({ token, role }) {
             </DialogTitle>
           </DialogHeader>
           {formErr && (
-            <div className='rounded-lg px-3 py-2.5 text-sm border bg-red-500/10 border-red-500/20 text-red-400'>
+            <div className='rounded-lg px-3 py-2.5 text-sm border bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'>
               {formErr}
             </div>
           )}

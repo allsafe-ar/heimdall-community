@@ -96,8 +96,8 @@ export default function Alertas({ token }) {
 
       {aviso && (
         <div className={`text-sm rounded-md px-3 py-2 border ${aviso.ok
-          ? 'border-green-500/40 text-green-400 bg-green-500/10'
-          : 'border-red-500/40 text-red-400 bg-red-500/10'}`}>
+          ? 'border-green-500/40 text-green-700 dark:text-green-400 bg-green-500/10'
+          : 'border-red-500/40 text-red-700 dark:text-red-400 bg-red-500/10'}`}>
           {aviso.texto}
         </div>
       )}
@@ -188,7 +188,7 @@ export default function Alertas({ token }) {
           </div>
           <div>
             <label className={etiqueta}>
-              {t('alerts.pass')} {cfg.pass_set && <span className='text-green-400'>· {t('alerts.pass_set')}</span>}
+              {t('alerts.pass')} {cfg.pass_set && <span className='text-green-700 dark:text-green-400'>· {t('alerts.pass_set')}</span>}
             </label>
             <input type='password' className={campo} value={cfg.pass} autoComplete='new-password'
               placeholder={cfg.pass_set ? '••••••••' : ''}

@@ -8,25 +8,25 @@ const SECTIONS = [
     id: 'event-types',
     es: 'Tipos de evento', en: 'Event types',
     terms: [
-      { k: 'EXPLOIT', pro: true, color: 'text-pink-400',
+      { k: 'EXPLOIT', pro: true, color: 'text-pink-700 dark:text-pink-400',
         es: { t: 'EXPLOIT', d: 'Intento de explotación real: SQL injection, path traversal, Log4Shell, ejecución remota de comandos (RCE) o subida de webshell. Es lo más serio: alguien no solo está mirando, está intentando romper algo. Si ves EXPLOIT desde una IP, conviene revisarla.' },
         en: { t: 'EXPLOIT', d: 'A real exploitation attempt: SQL injection, path traversal, Log4Shell, remote command execution (RCE) or webshell upload. This is the most serious one: someone is not just looking, they are trying to break in. If you see EXPLOIT from an IP, it is worth reviewing.' } },
-      { k: 'BRUTE', color: 'text-red-400',
+      { k: 'BRUTE', color: 'text-red-700 dark:text-red-400',
         es: { t: 'BRUTE (fuerza bruta)', d: 'Intentos repetidos de inicio de sesión probando usuarios y contraseñas. Suele ser un bot o herramienta automática (hydra, medusa) probando credenciales comunes. Las credenciales que prueban quedan capturadas.' },
         en: { t: 'BRUTE (brute force)', d: 'Repeated login attempts trying usernames and passwords. Usually a bot or automated tool (hydra, medusa) testing common credentials. The credentials they try are captured.' } },
-      { k: 'PORTSCAN', pro: true, color: 'text-purple-400',
+      { k: 'PORTSCAN', pro: true, color: 'text-purple-700 dark:text-purple-400',
         es: { t: 'PORTSCAN', d: 'Alguien escaneó varios puertos de tu servidor en poco tiempo buscando qué servicios tenés expuestos (nmap, masscan). Es el paso previo a elegir un objetivo.' },
         en: { t: 'PORTSCAN', d: 'Someone scanned several ports of your server in a short time to find which services you expose (nmap, masscan). It is the step before picking a target.' } },
-      { k: 'SCAN', color: 'text-orange-400',
+      { k: 'SCAN', color: 'text-orange-700 dark:text-orange-400',
         es: { t: 'SCAN (escaneo)', d: 'Sondeo de rutas y archivos buscando vulnerabilidades conocidas: archivos .env expuestos, repos .git, paneles de WordPress, phpMyAdmin, etc. Es masivo y automático: le pegan a millones de IPs por día.' },
         en: { t: 'SCAN', d: 'Probing of paths and files looking for known vulnerabilities: exposed .env files, .git repos, WordPress panels, phpMyAdmin, etc. It is massive and automated: they hit millions of IPs per day.' } },
-      { k: 'BOT', color: 'text-yellow-400',
+      { k: 'BOT', color: 'text-yellow-700 dark:text-yellow-400',
         es: { t: 'BOT', d: 'Tráfico de un bot automatizado (scraper, crawler o herramienta identificada por su User-Agent). No es necesariamente malicioso, pero no es una persona real.' },
         en: { t: 'BOT', d: 'Traffic from an automated bot (scraper, crawler or a tool identified by its User-Agent). Not necessarily malicious, but not a real person.' } },
-      { k: 'RECON', color: 'text-blue-400',
+      { k: 'RECON', color: 'text-blue-700 dark:text-blue-400',
         es: { t: 'RECON (reconocimiento)', d: 'Recopilación de información sobre el servidor sin atacar todavía: ver qué responde, qué tecnología usa. Es la fase de "estudiar el terreno".' },
         en: { t: 'RECON', d: 'Information gathering about the server without attacking yet: seeing what responds, what technology it runs. The "study the terrain" phase.' } },
-      { k: 'HUMAN', color: 'text-green-400',
+      { k: 'HUMAN', color: 'text-green-700 dark:text-green-400',
         es: { t: 'HUMAN (humano)', d: 'Interacción que parece de un navegador real (con sus cabeceras típicas). Puede ser una persona curioseando o un bot bien disfrazado. No implica peligro por sí solo.' },
         en: { t: 'HUMAN', d: 'Interaction that looks like a real browser (with its typical headers). Could be a person poking around or a well-disguised bot. Not dangerous by itself.' } },
     ],
@@ -128,7 +128,7 @@ export default function Guia({ proOnly = false }) {
         <div key={s.id}>
           <h3 className='text-sm font-semibold text-foreground mb-2 flex items-center gap-2'>
             {s[lang]}
-            {s.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-400'>PRO</span>}
+            {s.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
           </h3>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
             {s.terms.map(term => {
@@ -137,7 +137,7 @@ export default function Guia({ proOnly = false }) {
                 <div key={term.k} className='bg-card border border-border rounded-xl p-4'>
                   <div className='flex items-center gap-2 mb-1.5'>
                     <span className={`font-semibold ${term.color || 'text-foreground'}`}>{c.t}</span>
-                    {term.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-400'>PRO</span>}
+                    {term.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
                   </div>
                   <p className='text-xs text-muted-foreground leading-relaxed'>{c.d}</p>
                 </div>

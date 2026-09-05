@@ -20,13 +20,13 @@ export default function Auditoria({ token }) {
   const ACTION_META = {
     login:           { label: t('audit.action.login'),            cls: 'text-green-500'  },
     password_changed:{ label: t('audit.action.password_changed'), cls: 'text-yellow-500' },
-    user_created:    { label: t('audit.action.user_created'),     cls: 'text-blue-400'   },
-    user_updated:    { label: t('audit.action.user_updated'),     cls: 'text-blue-400'   },
+    user_created:    { label: t('audit.action.user_created'),     cls: 'text-blue-700 dark:text-blue-400'   },
+    user_updated:    { label: t('audit.action.user_updated'),     cls: 'text-blue-700 dark:text-blue-400'   },
     user_deleted:    { label: t('audit.action.user_deleted'),     cls: 'text-red-500'    },
-    user_toggle:     { label: t('audit.action.user_toggle'),      cls: 'text-yellow-400' },
-    events_cleared:  { label: t('audit.action.events_cleared'),   cls: 'text-red-400'    },
-    template_created:{ label: t('audit.action.template_created'), cls: 'text-blue-400'   },
-    template_deleted:{ label: t('audit.action.template_deleted'), cls: 'text-red-400'    },
+    user_toggle:     { label: t('audit.action.user_toggle'),      cls: 'text-yellow-700 dark:text-yellow-400' },
+    events_cleared:  { label: t('audit.action.events_cleared'),   cls: 'text-red-700 dark:text-red-400'    },
+    template_created:{ label: t('audit.action.template_created'), cls: 'text-blue-700 dark:text-blue-400'   },
+    template_deleted:{ label: t('audit.action.template_deleted'), cls: 'text-red-700 dark:text-red-400'    },
   }
 
   const [logs, setLogs]       = useState([])

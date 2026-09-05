@@ -218,7 +218,7 @@ export default function MiCuenta({ token, userInfo }) {
               <div className={`mb-4 rounded-lg px-3 py-2.5 text-sm border ${
                 passMsg.ok
                   ? 'bg-green-500/10 border-green-500/20 text-green-500'
-                  : 'bg-red-500/10 border-red-500/20 text-red-400'
+                  : 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'
               }`}>
                 {passMsg.text}
               </div>
@@ -258,7 +258,7 @@ export default function MiCuenta({ token, userInfo }) {
             </div>
 
             {totpMsg && (
-              <div className={`mb-4 rounded-lg px-3 py-2.5 text-sm border ${totpMsg.ok ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+              <div className={`mb-4 rounded-lg px-3 py-2.5 text-sm border ${totpMsg.ok ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'}`}>
                 {totpMsg.text}
               </div>
             )}

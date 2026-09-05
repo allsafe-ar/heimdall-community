@@ -142,9 +142,9 @@ export default function EventTable({ token, refreshTick }) {
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <span className={`font-terminal text-xs ${
-                      ev.score >= 70 ? 'text-red-400' :
-                      ev.score >= 50 ? 'text-orange-400' :
-                      ev.score >= 30 ? 'text-yellow-400' : 'text-green-400'
+                      ev.score >= 70 ? 'text-red-700 dark:text-red-400' :
+                      ev.score >= 50 ? 'text-orange-700 dark:text-orange-400' :
+                      ev.score >= 30 ? 'text-yellow-700 dark:text-yellow-400' : 'text-green-700 dark:text-green-400'
                     }`}>
                       {ev.score ?? '—'}
                     </span>
@@ -185,7 +185,7 @@ export default function EventTable({ token, refreshTick }) {
                   onClick={() => setPage(p)}
                   className={`px-2.5 py-1 text-xs font-terminal rounded transition-colors ${
                     p === page
-                      ? 'bg-red-600/20 text-red-400 border border-red-600/30'
+                      ? 'bg-red-600/20 text-red-700 dark:text-red-400 border border-red-600/30'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >

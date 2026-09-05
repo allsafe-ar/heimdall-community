@@ -98,14 +98,14 @@ function CustomTemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin, 
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
         isActive ? 'bg-green-500/15' : 'bg-muted'
       }`}>
-        <Wand2 className={`size-5 ${isActive ? 'text-green-400' : 'text-muted-foreground'}`} />
+        <Wand2 className={`size-5 ${isActive ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'}`} />
       </div>
 
       <div className='flex-1 min-w-0'>
         <div className='flex items-center gap-2'>
           <span className='text-sm font-semibold text-foreground truncate'>{tpl.name}</span>
           {isActive && (
-            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 shrink-0'>
+            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
               <span className='w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse' />
               {t('senualos.active')}
             </span>
@@ -117,10 +117,10 @@ function CustomTemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin, 
       <div className='flex items-center gap-1.5 shrink-0'>
         {isConfirming ? (
           <div className='flex items-center gap-1.5 text-xs'>
-            <span className='text-red-400 font-medium'>{t('senualos.delete_confirm')}</span>
+            <span className='text-red-700 dark:text-red-400 font-medium'>{t('senualos.delete_confirm')}</span>
             <button
               onClick={() => onDelete(tpl.id, true)}
-              className='px-2 py-1 rounded text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors font-medium'
+              className='px-2 py-1 rounded text-red-700 dark:text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors font-medium'
             >{t('senualos.delete_yes')}</button>
             <button
               onClick={onDeleteCancel}
@@ -139,14 +139,14 @@ function CustomTemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin, 
             <button
               onClick={() => onTogglePin(tpl.id)}
               className={`p-1.5 rounded-md transition-colors ${
-                isPinned ? 'text-yellow-400 hover:text-yellow-300' : 'text-muted-foreground hover:text-foreground'
+                isPinned ? 'text-yellow-700 dark:text-yellow-400 hover:text-yellow-300' : 'text-muted-foreground hover:text-foreground'
               }`}
               title={isPinned ? t('senualos.pin_remove') : t('senualos.pin_add')}
             >
               <Star className='size-4' fill={isPinned ? 'currentColor' : 'none'} />
             </button>
             {isActive ? (
-              <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-green-400 border border-green-500/30 bg-green-500/10'>
+              <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-green-700 dark:text-green-400 border border-green-500/30 bg-green-500/10'>
                 <CheckCircle2 className='size-3.5' />
                 {t('senualos.activated')}
               </div>
@@ -178,14 +178,14 @@ function TemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin }) {
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
         isActive ? 'bg-green-500/15' : 'bg-muted'
       }`}>
-        <Icon className={`size-5 ${isActive ? 'text-green-400' : 'text-muted-foreground'}`} />
+        <Icon className={`size-5 ${isActive ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'}`} />
       </div>
 
       <div className='flex-1 min-w-0'>
         <div className='flex items-center gap-2'>
           <span className='text-sm font-semibold text-foreground truncate'>{tpl.name}</span>
           {isActive && (
-            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 shrink-0'>
+            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
               <span className='w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse' />
               {t('senualos.active')}
             </span>
@@ -199,7 +199,7 @@ function TemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin }) {
           onClick={() => onTogglePin(tpl.id)}
           className={`p-1.5 rounded-md transition-colors ${
             isPinned
-              ? 'text-yellow-400 hover:text-yellow-300'
+              ? 'text-yellow-700 dark:text-yellow-400 hover:text-yellow-300'
               : 'text-muted-foreground hover:text-foreground'
           }`}
           title={isPinned ? t('senualos.pin_remove') : t('senualos.pin_add')}
@@ -208,7 +208,7 @@ function TemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin }) {
         </button>
 
         {isActive ? (
-          <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-green-400 border border-green-500/30 bg-green-500/10'>
+          <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-green-700 dark:text-green-400 border border-green-500/30 bg-green-500/10'>
             <CheckCircle2 className='size-3.5' />
             {t('senualos.activated')}
           </div>
@@ -419,7 +419,7 @@ export default function Senualos({ token, activeTemplate, pinnedTemplates, onAct
                   onClick={() => fileRef.current?.click()}
                   className={`h-8 flex items-center gap-2 rounded-md border px-3 text-xs transition-colors ${
                     logoPreview
-                      ? 'border-green-500/40 bg-green-500/10 text-green-400'
+                      ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400'
                       : 'border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
                 >
@@ -440,7 +440,7 @@ export default function Senualos({ token, activeTemplate, pinnedTemplates, onAct
             </div>
 
             {saveError && (
-              <p className='text-xs text-red-400'>{saveError}</p>
+              <p className='text-xs text-red-700 dark:text-red-400'>{saveError}</p>
             )}
 
             <div className='flex justify-end'>
