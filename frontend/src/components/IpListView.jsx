@@ -73,12 +73,12 @@ export default function IpListView({ token, onIpClick }) {
             value={countryFilter}
             onChange={e => resetAndSet(setCountryFilter)(e.target.value)}
             maxLength={2}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-28 font-terminal uppercase"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-28 font-terminal uppercase"
           />
           <select
             value={typeFilter}
             onChange={e => resetAndSet(setTypeFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {TYPE_FILTERS.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -87,7 +87,7 @@ export default function IpListView({ token, onIpClick }) {
           <select
             value={sort}
             onChange={e => { setSort(e.target.value); setPage(0) }}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {SORT_OPTIONS.map(s => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -132,13 +132,13 @@ export default function IpListView({ token, onIpClick }) {
                   {onIpClick ? (
                     <button
                       onClick={() => onIpClick(row.ip)}
-                      className="font-terminal text-sm text-foreground hover:text-primary transition-colors"
+                      className="font-terminal text-sm font-medium text-foreground hover:text-primary transition-colors"
                       title="Ver perfil de la IP"
                     >
                       {row.ip}
                     </button>
                   ) : (
-                    <span className="font-terminal text-sm text-foreground">{row.ip}</span>
+                    <span className="font-terminal text-sm font-medium text-foreground">{row.ip}</span>
                   )}
                 </td>
                 <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">

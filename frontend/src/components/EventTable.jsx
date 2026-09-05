@@ -64,12 +64,12 @@ export default function EventTable({ token, refreshTick }) {
             placeholder={t('events.filter_ip')}
             value={ipFilter}
             onChange={e => onFilterChange(setIpFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-36 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-36 font-terminal"
           />
           <select
             value={typeFilter}
             onChange={e => onFilterChange(setTypeFilter)(e.target.value)}
-            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
           >
             {TYPES.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -129,7 +129,7 @@ export default function EventTable({ token, refreshTick }) {
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="font-terminal text-xs text-foreground">
+                    <span className="font-terminal text-xs font-medium text-foreground">
                       {ev.ip}
                     </span>
                   </td>

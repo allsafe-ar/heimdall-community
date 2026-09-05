@@ -76,7 +76,7 @@ export function NavUser({ role, onTabChange }: Props) {
       </SidebarMenuItem>
 
       {menuOpen && createPortal(
-        <div id='heimdall-nav-menu' className='dark' style={portalStyle}>
+        <div id='heimdall-nav-menu' style={portalStyle}>
           <div className='z-50 rounded-md border bg-popover p-1 text-popover-foreground shadow-md'>
             <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>
               {t('nav.config')}

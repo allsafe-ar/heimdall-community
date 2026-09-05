@@ -109,8 +109,7 @@ export function AppTitle({ token, onGoHome }: Props) {
       {menuOpen && createPortal(
         <div
           id='heimdall-app-menu'
-          className='dark'
-          style={{
+            style={{
             position: 'fixed',
             top: menuPos.top,
             left: menuPos.left,

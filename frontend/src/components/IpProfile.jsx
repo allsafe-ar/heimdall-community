@@ -82,7 +82,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
           </div>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-white transition-colors text-xl w-8 h-8 flex items-center justify-center rounded hover:bg-muted"
+            className="text-muted-foreground hover:text-foreground transition-colors text-xl w-8 h-8 flex items-center justify-center rounded hover:bg-muted"
           >
             ✕
           </button>
