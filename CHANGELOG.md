@@ -3,6 +3,11 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.4.1] - 2026-09-22
+
+### Security
+- Dependencies back to **0 known vulnerabilities**. `express` moved up to 4.22.3, which is the first release that pins a `qs` outside the vulnerable range, plus transitive bumps within the declared ranges. No application code changed.
+
 ## [1.4.0] - 2026-08-18
 
 ### Added
