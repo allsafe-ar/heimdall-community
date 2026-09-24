@@ -399,35 +399,22 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
 // ─── TOTP ─────────────────────────────────────────────────────────────────────
 const crypto = require("crypto");
 
-function verifyTOTP(secret, token) {
-  function base32decode(s) {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    s = s.toUpperCase().replace(/=+$/, "");
-    let bits = 0, val = 0;
-    const out = [];
-    for (const c of s) {
-      const idx = alphabet.indexOf(c);
-      if (idx < 0) continue;
-      val = (val << 5) | idx;
-      bits += 5;
-      if (bits >= 8) { out.push((val >>> (bits - 8)) & 0xFF); bits -= 8; }
-    }
-    return Buffer.from(out);
-  }
-  const key  = base32decode(secret);
-  const step = Math.floor(Date.now() / 1000 / 30);
-  for (let i = -2; i <= 2; i++) {
-    const t   = step + i;
-    const buf = Buffer.alloc(8);
-    buf.writeUInt32BE(Math.floor(t / 0x100000000), 0);
-    buf.writeUInt32BE(t >>> 0, 4);
-    const hmac   = crypto.createHmac("sha1", key).update(buf).digest();
-    const offset = hmac[hmac.length - 1] & 0x0f;
-    const code   = ((hmac[offset] & 0x7f) << 24 | hmac[offset+1] << 16 | hmac[offset+2] << 8 | hmac[offset+3]) % 1_000_000;
-    if (code.toString().padStart(6, "0") === String(token)) return true;
-  }
-  return false;
-}
+// ── TOTP ──────────────────────────────────────────────────────────────────────
+// 🔑 Acá vivía una copia propia del algoritmo. Era una de NUEVE repartidas por los backends, y
+// cada copia envejece sola: la única forma de enterarse de que una quedó distinta es que alguien
+// no pueda entrar. Ahora se usa el módulo canónico, que es el mismo archivo en todos.
+//
+// ✅ Reemplazo sin efecto visible: `utiles/auth/pruebas/equivalencia.test.js` verificó que esta
+// copia aceptaba EXACTAMENTE los mismos códigos que el canónico, con tres secretos y trece
+// desfasajes cada uno. Nadie con doble factor queda afuera.
+// ⛔ Se llama `totpCanonico` y no `totp` porque el login destructura un campo `totp` del
+// cuerpo del pedido. Con el mismo nombre funcionaba solo por sombreado, y mover esas
+// líneas de lugar dejaba al módulo ocupando el lugar del código que manda el usuario.
+const totpCanonico = require("./totp");
+
+// Se mantienen los nombres viejos como alias, para no tocar los lugares que ya los llaman.
+const verifyTOTP = totpCanonico.verificar;
+
 
 // ─── Password policy ──────────────────────────────────────────────────────────
 function validatePassword(p) {
