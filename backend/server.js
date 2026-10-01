@@ -14,6 +14,7 @@ const fs         = require("fs");
 const mysql      = require("mysql2/promise");
 const bcrypt     = require("bcryptjs");
 const jwt        = require("jsonwebtoken");
+const desafio2fa = require("./desafio-2fa");
 const helmet     = require("helmet");
 const cors       = require("cors");
 const geoip      = require("geoip-lite");
@@ -515,7 +516,11 @@ app.post("/heimdall/api/auth/login", authLimiter, async (req, res) => {
   }
   await qRun("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?", [user.id]);
   if (user.totp_secret) {
-    return res.json({ needs2fa: true, userId: user.id, nombre: user.nombre || user.username, role: user.role });
+    // 🔴 Se entrega un desafío firmado, no el id: el segundo paso solo acepta a quien pasó por
+    // este (ver desafio-2fa.js). Viaja como `userId` porque es el campo que la pantalla ya
+    // devuelve en el segundo paso.
+    const desafio = desafio2fa.emitir(user, JWT_SECRET);
+    return res.json({ needs2fa: true, desafio, userId: desafio, nombre: user.nombre || user.username, role: user.role });
   }
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role || "admin", nombre: user.nombre || "", tokenVersion: user.token_version || 0 },
@@ -790,10 +795,15 @@ app.get("/heimdall/api/auth/me", authDash, async (req, res) => {
 });
 
 app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
-  const { userId, token: totpToken } = req.body || {};
-  if (!userId || !totpToken) return res.status(400).json({ error: "Datos requeridos" });
-  const user = await qRow("SELECT * FROM users WHERE id = ?", [userId]);
-  if (!user || !user.totp_secret) return res.status(400).json({ error: "2FA no configurado" });
+  const { desafio, userId, token: totpToken } = req.body || {};
+  if (!(desafio || userId) || !totpToken) return res.status(400).json({ error: "Datos requeridos" });
+  // 🔴 Solo con el desafío que entrega el primer paso, nunca con un id: así nadie llega acá sin
+  // haber pasado por la contraseña. Ver desafio-2fa.js.
+  const user = await desafio2fa.usuario(qRow, desafio || userId, JWT_SECRET);
+  if (!user) return res.status(401).json({ error: desafio2fa.MENSAJE_VENCIDO });
+  if (user.enabled === 0 || user.enabled === false)
+    return res.status(403).json({ error: "Tu cuenta está deshabilitada. Contactá al administrador." });
+  if (!user.totp_secret) return res.status(400).json({ error: "2FA no configurado" });
   if (user.locked_until && new Date(user.locked_until) > new Date())
     return res.status(429).json({ error: "Cuenta bloqueada temporalmente por demasiados intentos fallidos" });
   if (!verifyTOTP(user.totp_secret, String(totpToken))) {
