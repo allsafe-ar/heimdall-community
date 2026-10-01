@@ -6,6 +6,8 @@
 require("dotenv").config();
 
 const express    = require("express");
+// Que ningún error de una ruta async pueda tirar el proceso (ver async-seguro.js).
+require("./async-seguro").instalar();
 const http       = require("http");
 const https      = require("https");
 const { Server } = require("socket.io");
@@ -1217,6 +1219,18 @@ async function initDB() {
   }
   backfillGeo();
 }
+
+// Manejador final de errores: con async-seguro, todo error de una ruta llega acá. Responde sin
+// exponer el detalle; sin este manejador, Express devuelve su página con la pila del error.
+app.use((err, req, res, _next) => {
+  if (err && (err.type === "entity.parse.failed" || err.type === "entity.too.large"))
+    return res.status(err.status || 400).json({ error: "Pedido inválido" });
+  console.error(`[Heimdall] ${req.method} ${req.path}:`, err && err.message);
+  if (res.headersSent) return;
+  // En el señuelo, un 500 vacío como el de cualquier servidor: un JSON propio delataría la trampa.
+  if (!req.path.startsWith("/heimdall/api")) return res.status(500).end();
+  res.status(500).json({ error: "Error interno del servidor" });
+});
 
 initDB().then(() => {
   server.listen(PORT, () => {
