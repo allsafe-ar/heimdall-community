@@ -48,6 +48,8 @@ export default function Dashboard({ token, onLogout }) {
   const [paused, setPaused] = useState(false)
   const [activeTemplate, setActiveTemplate] = useState('generic')
   const [tab, setTab] = useState('overview')
+  // 🔴 H-10/11: con la contraseña inicial el servidor solo deja cambiarla; el panel se queda en Mi cuenta.
+  const [forzarCambio, setForzarCambio] = useState(false)
   const [refreshTick, setRefreshTick] = useState(0)
   const [connected, setConnected] = useState(false)
   const [clearConfirm, setClearConfirm] = useState(false)
@@ -86,6 +88,13 @@ export default function Dashboard({ token, onLogout }) {
       const d = await r.json()
       if (d.template) setActiveTemplate(d.template)
     } catch { /* ignore */ }
+  }, [token])
+
+  useEffect(() => {
+    fetch(`${BACKEND}/heimdall/api/auth/me`, { headers: authHeaders })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.mustChangePassword) { setForzarCambio(true); setTab('mi_cuenta') } })
+      .catch(() => {})
   }, [token])
 
   useEffect(() => {
@@ -143,6 +152,7 @@ export default function Dashboard({ token, onLogout }) {
   }
 
   function handleTabChange(id) {
+    if (forzarCambio) return
     setTab(id)
     if (id === 'table') setRefreshTick(r => r + 1)
   }
@@ -236,8 +246,14 @@ export default function Dashboard({ token, onLogout }) {
               <Reportes token={token} />
             )}
 
+            {tab === 'mi_cuenta' && forzarCambio && (
+              <div className='mb-4 rounded-lg border border-red-600/40 bg-red-600/10 px-4 py-3 text-sm'>
+                {t('account.must_change_password')}
+              </div>
+            )}
+
             {tab === 'mi_cuenta' && (
-              <MiCuenta token={token} userInfo={userInfo} />
+              <MiCuenta token={token} userInfo={userInfo} onPasswordChanged={onLogout} />
             )}
 
             {tab === 'alertas' && userInfo?.role === 'admin' && (

@@ -96,6 +96,7 @@
   "account.title":            "Mi cuenta",
   "account.change_password":  "Cambiar contraseña",
   "account.current_password": "Contraseña actual",
+  "account.must_change_password": "Por seguridad, cambiá la contraseña inicial antes de seguir. Después vas a tener que volver a ingresar.",
   "account.new_password":     "Nueva contraseña",
   "account.confirm_password": "Confirmar nueva contraseña",
   "account.save_password":    "Cambiar contraseña",

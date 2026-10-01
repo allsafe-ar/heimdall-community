@@ -22,7 +22,7 @@ function getOtpAuthUri(secret, username) {
   return `otpauth://totp/Heimdall:${encodeURIComponent(username)}?secret=${secret}&issuer=Heimdall&algorithm=SHA1&digits=6&period=30`
 }
 
-export default function MiCuenta({ token, userInfo }) {
+export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
   const { t, i18n } = useTranslation()
   const isAdmin = userInfo?.role === 'admin'
   const [lang, setLang] = useState(i18n.language)
@@ -53,6 +53,8 @@ export default function MiCuenta({ token, userInfo }) {
       if (r.ok) {
         setPassMsg({ ok: true, text: t('account.password_updated') })
         setPassForm({ current: '', next: '', confirm: '' })
+        // El servidor revoca las sesiones al cambiar la contraseña: se vuelve a ingresar.
+        if (onPasswordChanged) setTimeout(onPasswordChanged, 1500)
       } else {
         setPassMsg({ ok: false, text: d.error || t('account.change_password') })
       }
@@ -70,6 +72,8 @@ export default function MiCuenta({ token, userInfo }) {
   const [totpMsg, setTotpMsg]       = useState(null)
   const [totpSaving, setTotpSaving] = useState(false)
   const [removePass, setRemovePass] = useState('')
+  // 🔴 H-09: el alta del 2FA pide la contraseña; con la sesión sola no alcanza.
+  const [totpPass, setTotpPass]     = useState('')
 
   useEffect(() => {
     fetch(`${BACKEND}/heimdall/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
@@ -82,6 +86,7 @@ export default function MiCuenta({ token, userInfo }) {
     const secret = generateTOTPSecret()
     setTotpSecret(secret)
     setTotpCode('')
+    setTotpPass('')
     setTotpMsg(null)
     setTotpStep('setup')
   }
@@ -93,12 +98,13 @@ export default function MiCuenta({ token, userInfo }) {
       const r = await fetch(`${BACKEND}/heimdall/api/auth/setup-totp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ totpSecret, totpToken: totpCode }),
+        body: JSON.stringify({ totpSecret, totpToken: totpCode, password: totpPass }),
       })
       const d = await r.json()
       if (r.ok) {
         setHas2FA(true)
         setTotpStep(null)
+        setTotpPass('')
         setTotpMsg({ ok: true, text: t('account.2fa_enabled') })
       } else {
         setTotpMsg({ ok: false, text: d.error || t('account.2fa_error') })
@@ -302,8 +308,12 @@ export default function MiCuenta({ token, userInfo }) {
                       className="font-mono tracking-widest text-center text-base"
                     />
                   </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label>{t('account.current_password')}</Label>
+                    <Input type="password" value={totpPass} onChange={e => setTotpPass(e.target.value)} placeholder="••••••••" required />
+                  </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={totpSaving || totpCode.length !== 6} size="sm">
+                    <Button type="submit" disabled={totpSaving || totpCode.length !== 6 || !totpPass} size="sm">
                       {totpSaving ? t('account.saving') : t('account.2fa_confirm')}
                     </Button>
                     <Button type="button" variant="ghost" size="sm" onClick={() => { setTotpStep(null); setTotpMsg(null) }}>

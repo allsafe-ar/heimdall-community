@@ -96,6 +96,7 @@
   "account.title":            "My account",
   "account.change_password":  "Change password",
   "account.current_password": "Current password",
+  "account.must_change_password": "For security, change the initial password before continuing. You will need to sign in again afterwards.",
   "account.new_password":     "New password",
   "account.confirm_password": "Confirm new password",
   "account.save_password":    "Change password",

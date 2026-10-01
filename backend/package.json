@@ -1,6 +1,6 @@
 {
   "name": "heimdall-backend",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Heimdall — Web Honeypot & Dashboard",
   "main": "server.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.0",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.13",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {

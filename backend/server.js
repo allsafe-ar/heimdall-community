@@ -359,6 +359,26 @@ const io     = new Server(server, {
 });
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+// 🔴 H-08: CSP para todo lo que responde el panel (/heimdall). El señuelo queda sin ella a
+// propósito: sus plantillas imitan páginas reales con scripts en línea, y una CSP propia de
+// Heimdall en un "WordPress" lo delataría. upgrade-insecure-requests no va: rompe una
+// instalación servida por HTTP sin avisar.
+const cspPanel = helmet.contentSecurityPolicy({
+  useDefaults: false,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "blob:"],
+    connectSrc: ["'self'", "ws:", "wss:"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    frameAncestors: ["'none'"],
+    formAction: ["'self'"],
+  },
+});
+app.use("/heimdall", cspPanel);
 app.use(cors({ origin: CORS_ORIGIN, credentials: true, methods: ["GET","POST","PUT","DELETE","OPTIONS"], allowedHeaders: ["Content-Type","Authorization"] }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
@@ -369,11 +389,19 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10,  standardHead
 app.use("/heimdall/api/", apiLimiter);
 
 // Socket.io auth middleware
-io.use((socket, next) => {
+// 🔴 N-4 y H-10: el canal en vivo solo verificaba la firma. Ahora pide lo mismo que authDash
+// (cuenta habilitada, sesión no revocada) y no se abre con la contraseña inicial sin cambiar.
+io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) return next(new Error("No autorizado"));
-  try { socket.user = jwt.verify(token, JWT_SECRET); next(); }
-  catch { next(new Error("Token inválido")); }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const u = await qRow("SELECT enabled, token_version, must_change_password FROM users WHERE id = ?", [decoded.id]);
+    if (!u || !u.enabled || (u.token_version || 0) !== (decoded.tokenVersion || 0) || u.must_change_password)
+      return next(new Error("Token inválido"));
+    socket.user = decoded;
+    next();
+  } catch { next(new Error("Token inválido")); }
 });
 
 // ─── Templates ────────────────────────────────────────────────────────────────
@@ -457,15 +485,19 @@ function validatePassword(p) {
 }
 
 // ─── Dashboard auth ───────────────────────────────────────────────────────────
+const RUTAS_CAMBIO_OBLIGATORIO = new Set(["/heimdall/api/auth/change-password", "/heimdall/api/auth/me"]);
 const authDash = async (req, res, next) => {
   const h = req.headers.authorization || "";
   if (!h.startsWith("Bearer ")) return res.status(401).json({ error: "No autorizado" });
   try {
     const decoded = jwt.verify(h.slice(7), JWT_SECRET);
-    const user = await qRow("SELECT enabled, token_version FROM users WHERE id = ?", [decoded.id]);
+    const user = await qRow("SELECT enabled, token_version, must_change_password FROM users WHERE id = ?", [decoded.id]);
     if (!user || !user.enabled) return res.status(401).json({ error: "Cuenta bloqueada" });
     if ((user.token_version || 0) !== (decoded.tokenVersion || 0))
       return res.status(401).json({ error: "Sesión inválida — iniciá sesión nuevamente" });
+    // 🔴 H-10/11: con la contraseña inicial solo se puede cambiarla.
+    if (user.must_change_password && !RUTAS_CAMBIO_OBLIGATORIO.has(req.originalUrl.split("?")[0]))
+      return res.status(403).json({ error: "Tenés que cambiar la contraseña inicial antes de seguir.", mustChangePassword: true });
     req.user = decoded;
     next();
   } catch { res.status(401).json({ error: "Token inválido" }); }
@@ -489,6 +521,48 @@ function clientIp(req) {
 // TRAP ROUTES  (must be declared before /heimdall)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 🔴 H-06: String() lanza TypeError con {"toString":1} (toString que no es función): el señuelo
+// respondía 500 y el intento no quedaba registrado. aTexto nunca lanza: lo que no es texto ni
+// número se guarda como JSON, que además es la evidencia de lo que mandó el atacante.
+function aTexto(v) {
+  if (v === undefined || v === null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean" || typeof v === "bigint") return String(v);
+  try { return JSON.stringify(v) ?? ""; } catch { return ""; }
+}
+
+const RUTAS_LOGIN_SENUELO = ["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/login"];
+
+// Captura de credenciales del señuelo, la misma para el puerto del panel y para 80/443.
+async function capturarLoginSenuelo(req, res) {
+  const ip   = clientIp(req);
+  const ua   = aTexto(req.headers["user-agent"]);
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const user = aTexto(body.username || body.user || body.email || body.log).slice(0, 100);
+  const pass = aTexto(body.password || body.pass || body.pwd).slice(0, 100);
+  const detail = user ? `${user}:${pass}` : aTexto(body).slice(0, 200);
+  const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
+  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua, signals: signalsTag(browserSignals(req)) });
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
+  res.status(401).json({ error: "Usuario o contraseña incorrectos." });
+}
+
+// 🔴 H-06: un cuerpo que no se puede leer (JSON malformado, demasiado grande) no llegaba a las
+// rutas del señuelo: no se registraba y la respuesta era un JSON en castellano que un WordPress
+// no da. Se registra y se contesta lo mismo que a un intento normal.
+async function senueloAnteError(err, req, res) {
+  try {
+    const ua = aTexto(req.headers["user-agent"]);
+    const motivo = err && err.type ? err.type : "error";
+    await logEvent({ rawIp: clientIp(req), type: req.method === "POST" && RUTAS_LOGIN_SENUELO.includes(req.path) ? "BRUTE" : classifyHttp(req.method, req.path, ua, req),
+      method: req.method, urlPath: req.path, detail: `cuerpo ilegible (${motivo})`, ua, signals: signalsTag(browserSignals(req)) });
+  } catch (e) { console.error("[Heimdall] señuelo:", e && e.message); }
+  if (res.headersSent) return;
+  if (req.method === "POST" && RUTAS_LOGIN_SENUELO.includes(req.path))
+    return res.status(401).json({ error: "Usuario o contraseña incorrectos." });
+  serveTemplate(res, activeTemplate);
+}
+
 // Serve honeypot assets on main app too (needed when port 80 is taken by nginx)
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
@@ -497,19 +571,7 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // honeypot perdiera en silencio toda visita a su puerta de entrada.
 
 // Capture login attempts — never authenticate, always delay + reject
-app.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/login"], async (req, res) => {
-  const ip   = clientIp(req);
-  const ua   = req.headers["user-agent"] || "";
-  const body = req.body || {};
-  // String(): un cuerpo con tipos raros ({"username":{...}}) daba 500 y delataba la trampa.
-  const user = String(body.username || body.user || body.email || body.log || "").slice(0, 100);
-  const pass = String(body.password || body.pass || body.pwd || "").slice(0, 100);
-  const detail = user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200);
-  const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
-  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua, signals: signalsTag(browserSignals(req)) });
-  await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
-  res.status(401).json({ error: "Usuario o contraseña incorrectos." });
-});
+app.post(RUTAS_LOGIN_SENUELO, capturarLoginSenuelo);
 
 // Catch-all trap — log every unknown request
 app.use(async (req, res, next) => {
@@ -562,7 +624,7 @@ app.post("/heimdall/api/auth/login", authLimiter, async (req, res) => {
     JWT_SECRET, { expiresIn: "12h" }
   );
   await logAudit(user.id, "login", `Login desde ${clientIp(req)}`);
-  res.json({ token, username: user.username, role: user.role });
+  res.json({ token, username: user.username, role: user.role, mustChangePassword: !!user.must_change_password });
 });
 
 app.get("/heimdall/api/stats", authDash, async (req, res) => {
@@ -824,16 +886,17 @@ app.post("/heimdall/api/auth/change-password", authDash, async (req, res) => {
   const user = await qRow("SELECT * FROM users WHERE id = ?", [req.user.id]);
   if (!user || !(await bcrypt.compare(currentPassword, user.password_hash)))
     return res.status(401).json({ error: "Contraseña actual incorrecta" });
+  if (newPassword === currentPassword) return res.status(400).json({ error: "La nueva contraseña tiene que ser distinta de la actual" });
   const hash = await bcrypt.hash(newPassword, 10);
-  await qRun("UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?", [hash, req.user.id]);
+  await qRun("UPDATE users SET password_hash = ?, must_change_password = 0, token_version = token_version + 1 WHERE id = ?", [hash, req.user.id]);
   await logAudit(req.user.id, "password_changed", "Contraseña cambiada");
   res.json({ ok: true });
 });
 
 app.get("/heimdall/api/auth/me", authDash, async (req, res) => {
-  const user = await qRow("SELECT id, username, nombre, role, totp_secret FROM users WHERE id = ?", [req.user.id]);
+  const user = await qRow("SELECT id, username, nombre, role, totp_secret, must_change_password FROM users WHERE id = ?", [req.user.id]);
   if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
-  res.json({ id: user.id, username: user.username, nombre: user.nombre, role: user.role, has_totp: !!user.totp_secret });
+  res.json({ id: user.id, username: user.username, nombre: user.nombre, role: user.role, has_totp: !!user.totp_secret, mustChangePassword: !!user.must_change_password });
 });
 
 app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
@@ -848,7 +911,7 @@ app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
   if (!user.totp_secret) return res.status(400).json({ error: "2FA no configurado" });
   if (user.locked_until && new Date(user.locked_until) > new Date())
     return res.status(429).json({ error: "Cuenta bloqueada temporalmente por demasiados intentos fallidos" });
-  if (!verifyTOTP(user.totp_secret, String(totpToken))) {
+  if (!verifyTOTP(user.totp_secret, aTexto(totpToken))) {
     const attempts = (user.failed_attempts || 0) + 1;
     if (attempts >= 5) {
       const until = new Date(Date.now() + 15 * 60 * 1000);
@@ -864,13 +927,22 @@ app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
     JWT_SECRET, { expiresIn: "12h" }
   );
   await logAudit(user.id, "login_2fa", `Login 2FA desde ${clientIp(req)}`);
-  res.json({ token, username: user.username, role: user.role });
+  res.json({ token, username: user.username, role: user.role, mustChangePassword: !!user.must_change_password });
 });
 
+// 🔴 H-09: el alta del 2FA pedía solo la sesión. Con un token robado se ataba la cuenta a un
+// autenticador ajeno o se pisaba el del dueño. Ahora exige la contraseña, no reemplaza un 2FA
+// activo (para eso está remove-totp, que también la pide) y no acepta un secreto débil.
 app.post("/heimdall/api/auth/setup-totp", authDash, async (req, res) => {
-  const { totpSecret, totpToken } = req.body || {};
-  if (!totpSecret || !totpToken) return res.status(400).json({ error: "Datos requeridos" });
-  if (!verifyTOTP(totpSecret, String(totpToken)))
+  const { totpSecret, totpToken, password } = req.body || {};
+  if (typeof totpSecret !== "string" || !totpSecret || !totpToken) return res.status(400).json({ error: "Datos requeridos" });
+  if (typeof password !== "string" || !password) return res.status(400).json({ error: "Contraseña requerida para activar 2FA" });
+  if (!/^[A-Z2-7]{16,64}$/.test(totpSecret)) return res.status(400).json({ error: "Secreto 2FA inválido" });
+  const actual = await qRow("SELECT password_hash, totp_secret FROM users WHERE id = ?", [req.user.id]);
+  if (!actual || !(await bcrypt.compare(password, actual.password_hash)))
+    return res.status(401).json({ error: "Contraseña incorrecta" });
+  if (actual.totp_secret) return res.status(409).json({ error: "El 2FA ya está activo. Deshabilitalo antes de configurar otro." });
+  if (!verifyTOTP(totpSecret, aTexto(totpToken)))
     return res.status(400).json({ error: "Código incorrecto. Verificá que la hora de tu dispositivo sea correcta." });
   await qRun("UPDATE users SET totp_secret = ? WHERE id = ?", [totpSecret, req.user.id]);
   await logAudit(req.user.id, "totp_enabled", "2FA activado");
@@ -917,6 +989,12 @@ app.put("/heimdall/api/users/:id", authDash, authAdmin, async (req, res) => {
   if (role && !["admin", "viewer"].includes(role)) return res.status(400).json({ error: "Rol inválido" });
   const updates = []; const params = [];
   if (role !== undefined)              { updates.push("role = ?");          params.push(role); }
+  // 🔴 N-3: authAdmin decide con el rol del JWT; bajar a alguien de admin no le cerraba la
+  // sesión durante 12 h. Si el rol cambia, se revocan sus sesiones (como G-10 en Gjallarhorn).
+  if (role !== undefined && !password) {
+    const previo = await qRow("SELECT role FROM users WHERE id = ?", [id]);
+    if (previo && previo.role !== role) updates.push("token_version = token_version + 1");
+  }
   if (nombre !== undefined)            { updates.push("nombre = ?");        params.push(nombre.slice(0, 100)); }
   if (username && username.trim())     { updates.push("username = ?");      params.push(username.trim().slice(0, 50)); }
   if (password) {
@@ -1043,7 +1121,7 @@ app.get("/heimdall/api/settings/ip-allowlist", authDash, authAdmin, async (req, 
 });
 
 app.put("/heimdall/api/settings/ip-allowlist", authDash, authAdmin, async (req, res) => {
-  const v = String(req.body?.value || "").slice(0, 4000);
+  const v = aTexto(req.body?.value).slice(0, 4000);
   await qRun("INSERT INTO settings (key_name, value) VALUES ('ip_allowlist', ?) ON DUPLICATE KEY UPDATE value = ?", [v, v]);
   await cargarAllowlist();
   await logAudit(req.user.id, "ip_allowlist", `Allowlist de IPs propias: ${ipAllowlist.length} entradas`);
@@ -1072,17 +1150,7 @@ function buildTrapApp() {
   // Los GET de la raíz y de los paths clásicos de escaneo NO se atajan acá: caen al
   // catch-all del final, que es el único que registra el evento.
 
-  t.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/login"], async (req, res) => {
-    const ip   = clientIp(req);
-    const ua   = req.headers["user-agent"] || "";
-    const body = req.body || {};
-    const user = String(body.username || body.user || body.email || body.log || "").slice(0, 100);
-    const pass = String(body.password || body.pass || body.pwd || "").slice(0, 100);
-    const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
-    await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail: user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
-    res.status(401).json({ error: "Usuario o contraseña incorrectos." });
-  });
+  t.post(RUTAS_LOGIN_SENUELO, capturarLoginSenuelo);
 
   t.use(async (req, res) => {
     const ip   = clientIp(req);
@@ -1092,6 +1160,9 @@ function buildTrapApp() {
     await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
     serveTemplate(res, activeTemplate);
   });
+
+  // 🔴 H-06: sin manejador propio, un error en 80/443 mostraba la página de Express.
+  t.use((err, req, res, _next) => { senueloAnteError(err, req, res); });
 
   return t;
 }
@@ -1165,6 +1236,7 @@ async function initDB() {
   try { await qRun("ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN failed_attempts INT NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN locked_until DATETIME DEFAULT NULL"); } catch {}
+  try { await qRun("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0"); } catch {}
   try { await qRun("ALTER TABLE events ADD COLUMN lat DECIMAL(8,5) DEFAULT NULL"); } catch {}
   try { await qRun("ALTER TABLE events ADD COLUMN lon DECIMAL(8,5) DEFAULT NULL"); } catch {}
   // Migraciones additivas de la v1.3.0: categorías nuevas y señales de navegador
@@ -1217,10 +1289,17 @@ async function initDB() {
   ) ENGINE=InnoDB CHARSET=utf8mb4`);
 
   const existing = await qRow("SELECT COUNT(*) AS c FROM users");
-  if (!existing || existing.c === 0) {
-    const hash = await bcrypt.hash("admin123", 10);
-    await qRun("INSERT INTO users (username, password_hash, role) VALUES (?,?,?)", ["admin", hash, "admin"]);
-    console.log("[Heimdall] Usuario admin creado — password: admin123 (cambiar al primer login)");
+  if (!existing || Number(existing.c) === 0) {
+    // 🔴 H-10/11: era admin/admin123 para toda instalación y nada obligaba a cambiarla. Ahora la
+    // inicial sale de ADMIN_PASSWORD_INICIAL o es aleatoria (se muestra una sola vez en el log),
+    // y el primer ingreso exige cambiarla. Las cuentas que ya existen no se tocan.
+    const desdeEnv = process.env.ADMIN_PASSWORD_INICIAL;
+    const inicial = desdeEnv || crypto.randomBytes(12).toString("base64url");
+    const hash = await bcrypt.hash(inicial, 10);
+    await qRun("INSERT INTO users (username, password_hash, role, must_change_password) VALUES (?,?,?,1)", ["admin", hash, "admin"]);
+    console.log(desdeEnv
+      ? "[Heimdall] Usuario admin creado con la contraseña de ADMIN_PASSWORD_INICIAL. El primer ingreso obliga a cambiarla."
+      : `[Heimdall] Usuario admin creado. Contraseña inicial (se muestra una sola vez): ${inicial} . El primer ingreso obliga a cambiarla.`);
   } else {
     // Ensure the first user has admin role
     await qRun("UPDATE users SET role = 'admin' WHERE id = (SELECT id FROM (SELECT MIN(id) AS id FROM users) t)");
@@ -1263,12 +1342,15 @@ async function initDB() {
 // Manejador final de errores: con async-seguro, todo error de una ruta llega acá. Responde sin
 // exponer el detalle; sin este manejador, Express devuelve su página con la pila del error.
 app.use((err, req, res, _next) => {
+  // Fuera del panel es el señuelo: se registra y responde como siempre (ver senueloAnteError).
+  if (!req.path.startsWith("/heimdall")) {
+    if (!(err && err.type)) console.error(`[Heimdall] ${req.method} ${req.path}:`, err && err.message);
+    return senueloAnteError(err, req, res);
+  }
   if (err && (err.type === "entity.parse.failed" || err.type === "entity.too.large"))
     return res.status(err.status || 400).json({ error: "Pedido inválido" });
   console.error(`[Heimdall] ${req.method} ${req.path}:`, err && err.message);
   if (res.headersSent) return;
-  // En el señuelo, un 500 vacío como el de cualquier servidor: un JSON propio delataría la trampa.
-  if (!req.path.startsWith("/heimdall/api")) return res.status(500).end();
   res.status(500).json({ error: "Error interno del servidor" });
 });
 
