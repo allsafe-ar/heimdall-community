@@ -142,12 +142,16 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+        # nginx es el borde: pisa la cabecera que mande el cliente (el backend confía en ella
+        # solo cuando el pedido llega desde loopback, ver TRUST_PROXY en server.js)
+        proxy_set_header X-Forwarded-For \$remote_addr;
     }
     location /socket.io/ {
         proxy_pass http://localhost:${BACKEND_PORT};
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
+        proxy_set_header X-Forwarded-For \$remote_addr;
     }
 }
 NGINX

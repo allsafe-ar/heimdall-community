@@ -250,7 +250,7 @@ Los endpoints señuelo del honeypot están abiertos a propósito - esa es justam
 - **Headers de seguridad** (Helmet) + **rate limiting HTTP** - 300 req/15 min en la API, endpoints de auth limitados a 10/15 min
 - **Control de acceso por rol** - `admin` / `viewer`
 - **SQL 100% parametrizado** - sin queries armadas por concatenación, sin vectores de inyección (OWASP Top 10 2021)
-- **Arranque fail-fast** - el backend no inicia con un `JWT_SECRET` ausente, por defecto o demasiado corto
+- **Arranque fail-fast** - el backend no inicia con un `JWT_SECRET` ausente, de ejemplo o de menos de 32 caracteres
 - **CORS** restringido al origen configurado (sin comodín)
 
 ---

@@ -249,7 +249,7 @@ The honeypot decoy endpoints are intentionally open - that is the whole point - 
 - **Security headers** (Helmet) + **HTTP rate limiting** - 300 req/15 min on the API, auth endpoints throttled to 10/15 min
 - **Role-based access control** - `admin` / `viewer`
 - **100% parameterized SQL** - no string-built queries, no injection vectors (OWASP Top 10 2021)
-- **Fail-fast startup** - the backend refuses to boot with a missing, default or too-short `JWT_SECRET`
+- **Fail-fast startup** - the backend refuses to boot with a missing, example or shorter than 32 characters `JWT_SECRET`
 - **CORS** locked to the configured origin (no wildcard)
 
 ---

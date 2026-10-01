@@ -27,15 +27,33 @@ const APP_VERSION = require("./package.json").version;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const PORT        = parseInt(process.env.PORT        || "3005");
-const JWT_SECRET  = process.env.JWT_SECRET           || "CHANGE_IN_PRODUCTION";
+const JWT_SECRET  = process.env.JWT_SECRET           || "";
 const DB_HOST     = process.env.DB_HOST              || "localhost";
 const DB_USER     = process.env.DB_USER              || "heimdall";
 const DB_PASS     = process.env.DB_PASSWORD          || "";
 const DB_NAME     = process.env.DB_NAME              || "heimdall_db";
 const CORS_ORIGIN = process.env.CORS_ORIGIN          || (process.env.NODE_ENV === "production" ? false : "http://localhost:5180");
 
-if (!JWT_SECRET || JWT_SECRET === "CHANGE_IN_PRODUCTION" || JWT_SECRET.length < 16) {
-  console.error("[Heimdall] FATAL: JWT_SECRET no configurado en .env");
+// 🔴 El secreto que firma las sesiones. Se rechaza vacío, corto (menos de 32) o igual a un
+// valor de ejemplo conocido: quien copia el .env.example sin cambiarlo arrancaba con un
+// secreto público, y cualquiera podía firmarse una sesión de administrador.
+const SECRETOS_DE_EJEMPLO = [
+  "CHANGE_IN_PRODUCTION",
+  "change_this_to_a_random_string_min_32_chars",
+  "gjallar_jwt_secret_CHANGE_IN_PROD",
+  "gjallar_jwt_secret_CHANGE_THIS_IN_PRODUCTION",
+  "gungnir_jwt_CHANGE_IN_PROD",
+  "cambiar_esto_por_un_secreto_de_al_menos_32_caracteres_random",
+];
+function motivoSecretoInseguro(s) {
+  if (!s) return "no está configurado";
+  if (s.length < 32) return "tiene menos de 32 caracteres";
+  if (SECRETOS_DE_EJEMPLO.includes(s) || /change[_-]?(this|me|in[_-]?prod)|cambiar[_-]?esto/i.test(s))
+    return "es un valor de ejemplo";
+  return null;
+}
+if (motivoSecretoInseguro(JWT_SECRET)) {
+  console.error(`[Heimdall] FATAL: JWT_SECRET ${motivoSecretoInseguro(JWT_SECRET)}. Generá uno con: openssl rand -hex 32`);
   process.exit(1);
 }
 if (process.env.NODE_ENV === "production" && !process.env.DB_PASSWORD) {
@@ -331,6 +349,10 @@ function threatScore(type) {
 
 // ─── Express + Socket.io ──────────────────────────────────────────────────────
 const app    = express();
+// Proxies de confianza para X-Forwarded-For: "loopback" (el nginx de install.sh) salvo que
+// TRUST_PROXY diga otra cosa (lista de IPs/subredes, o "false" si el puerto se publica directo).
+const TRUST_PROXY = process.env.TRUST_PROXY || "loopback";
+app.set("trust proxy", TRUST_PROXY === "false" ? false : /^\d+$/.test(TRUST_PROXY) ? Number(TRUST_PROXY) : TRUST_PROXY);
 const server = http.createServer(app);
 const io     = new Server(server, {
   cors: { origin: CORS_ORIGIN, credentials: true },
@@ -365,6 +387,8 @@ function serveTemplate(res, name) {
 }
 
 // ─── Event logging + broadcast ────────────────────────────────────────────────
+const recortar = (v, max) => (typeof v === "string" && v.length > max ? v.slice(0, max) : v);
+
 async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", port = null, ua = "", signals = null }) {
   const geo   = geoLookup(rawIp);
   const score = threatScore(type);
@@ -388,9 +412,13 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     ts:           ts.toISOString(),
   };
   try {
+    // 🔴 Todo valor se recorta al ancho de su columna ANTES del INSERT: con un path de más de
+    // 500 caracteres MySQL rechazaba la fila ("Data too long") y el ataque no quedaba
+    // registrado. Bastaba con prefijar relleno para pasar sin dejar rastro.
     await qRun(
       "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, internal, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-      [ev.ip, ev.country, ev.city, ev.lat, ev.lon, ev.type, ev.method, ev.path, ev.detail, ev.port, ev.ua, ev.threat_score, ev.signals, ev.internal, ts]
+      [recortar(ev.ip, 45), recortar(ev.country, 2), recortar(ev.city, 100), ev.lat, ev.lon, ev.type, recortar(ev.method, 10),
+       recortar(ev.path, 500), ev.detail, ev.port, ev.ua, ev.threat_score, recortar(ev.signals, 80), ev.internal, ts]
     );
   } catch (e) { console.error("[log]", e.message); }
   io.emit("event", ev);
@@ -449,8 +477,12 @@ const authAdmin = (req, res, next) => {
 };
 
 // ─── IP helper ────────────────────────────────────────────────────────────────
+// 🔴 La IP sale de req.ip, que respeta "trust proxy": X-Forwarded-For solo cuenta cuando el
+// pedido llega de un proxy de confianza (por defecto, el nginx propio en la misma máquina).
+// Antes se tomaba el primer valor de la cabecera sin condiciones, y el atacante elegía qué IP
+// quedaba registrada, incluso una interna de la allowlist, que no dispara alertas.
 function clientIp(req) {
-  return (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  return String(req.ip || req.socket.remoteAddress || "").replace(/^::ffff:/, "");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -469,8 +501,9 @@ app.post(["/api/auth/login", "/login", "/wp-login.php", "/admin/login", "/user/l
   const ip   = clientIp(req);
   const ua   = req.headers["user-agent"] || "";
   const body = req.body || {};
-  const user = (body.username || body.user || body.email || body.log || "").slice(0, 100);
-  const pass = (body.password || body.pass || body.pwd || "").slice(0, 100);
+  // String(): un cuerpo con tipos raros ({"username":{...}}) daba 500 y delataba la trampa.
+  const user = String(body.username || body.user || body.email || body.log || "").slice(0, 100);
+  const pass = String(body.password || body.pass || body.pwd || "").slice(0, 100);
   const detail = user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200);
   const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
   await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua, signals: signalsTag(browserSignals(req)) });
@@ -633,9 +666,16 @@ app.get("/heimdall/api/report", authDash, async (req, res) => {
   }
 });
 
+// Entero acotado para LIMIT/OFFSET: "abc" o "-5" daban SQL inválido (500).
+function enteroEntre(v, porDefecto, min, max) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return porDefecto;
+  return Math.min(Math.max(n, min), max);
+}
+
 app.get("/heimdall/api/events", authDash, async (req, res) => {
-  const limit  = Math.min(parseInt(req.query.limit  || "50"), 1000);
-  const offset = parseInt(req.query.offset || "0");
+  const limit  = enteroEntre(req.query.limit,  50, 1, 1000);
+  const offset = enteroEntre(req.query.offset, 0,  0, 10_000_000);
   const type   = req.query.type || null;
   const ip     = req.query.ip   || null;
   const wheres = []; const params = [];
@@ -648,8 +688,8 @@ app.get("/heimdall/api/events", authDash, async (req, res) => {
 });
 
 app.get("/heimdall/api/ips", authDash, async (req, res) => {
-  const limit   = Math.min(parseInt(req.query.limit  || "100"), 500);
-  const offset  = parseInt(req.query.offset || "0");
+  const limit   = enteroEntre(req.query.limit,  100, 1, 500);
+  const offset  = enteroEntre(req.query.offset, 0,   0, 10_000_000);
   const country = req.query.country ? req.query.country.toUpperCase().slice(0, 2) : null;
   const type    = req.query.type    || null;
   const VALID_SORT = ["hits", "last_seen", "first_seen"];
@@ -993,7 +1033,7 @@ app.post("/heimdall/api/alerts/test", authDash, authAdmin, async (req, res) => {
 });
 
 app.get("/heimdall/api/alerts/log", authDash, authAdmin, async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit || "50"), 200);
+  const limit = enteroEntre(req.query.limit, 50, 1, 200);
   res.json({ alerts: await qRows(`SELECT * FROM alert_log ORDER BY id DESC LIMIT ${limit}`) });
 });
 
@@ -1036,8 +1076,8 @@ function buildTrapApp() {
     const ip   = clientIp(req);
     const ua   = req.headers["user-agent"] || "";
     const body = req.body || {};
-    const user = (body.username || body.user || body.email || body.log || "").slice(0, 100);
-    const pass = (body.password || body.pass || body.pwd || "").slice(0, 100);
+    const user = String(body.username || body.user || body.email || body.log || "").slice(0, 100);
+    const pass = String(body.password || body.pass || body.pwd || "").slice(0, 100);
     const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
     await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail: user ? `${user}:${pass}` : JSON.stringify(body).slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
     await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
