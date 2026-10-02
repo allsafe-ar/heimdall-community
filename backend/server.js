@@ -911,7 +911,9 @@ app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
   if (!user.totp_secret) return res.status(400).json({ error: "2FA no configurado" });
   if (user.locked_until && new Date(user.locked_until) > new Date())
     return res.status(429).json({ error: "Cuenta bloqueada temporalmente por demasiados intentos fallidos" });
-  if (!verifyTOTP(user.totp_secret, aTexto(totpToken))) {
+  // Un solo uso: se rechaza un codigo cuyo paso de 30 s ya se consumio (pasoMinimo = ultimo + 1).
+  const paso2fa = totpCanonico.verificarPaso(user.totp_secret, aTexto(totpToken), { pasoMinimo: (user.totp_ultimo_paso || 0) + 1 });
+  if (!paso2fa.ok) {
     const attempts = (user.failed_attempts || 0) + 1;
     if (attempts >= 5) {
       const until = new Date(Date.now() + 15 * 60 * 1000);
@@ -922,6 +924,7 @@ app.post("/heimdall/api/auth/verify-totp", authLimiter, async (req, res) => {
     return res.status(401).json({ error: "Código incorrecto" });
   }
   await qRun("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?", [user.id]);
+  await qRun("UPDATE users SET totp_ultimo_paso = ? WHERE id = ?", [paso2fa.paso, user.id]);
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role || "admin", nombre: user.nombre || "", tokenVersion: user.token_version || 0 },
     JWT_SECRET, { expiresIn: "12h" }
@@ -1230,6 +1233,7 @@ async function initDB() {
 
   // Migration: add columns if not exist (MySQL 8.0+)
   try { await qRun("ALTER TABLE users ADD COLUMN nombre VARCHAR(100) DEFAULT ''"); } catch {}
+  try { await qRun("ALTER TABLE users ADD COLUMN totp_ultimo_paso BIGINT NULL"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin'"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN enabled TINYINT(1) NOT NULL DEFAULT 1"); } catch {}
   try { await qRun("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(64) DEFAULT NULL"); } catch {}
