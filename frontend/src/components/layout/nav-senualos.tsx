@@ -6,6 +6,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { COLOR_FRENTE } from './nav-group'
 import { ALL_TEMPLATES } from '@/lib/templates'
 
 interface Props {
@@ -20,8 +21,8 @@ export function NavSenualos({ activeTemplate, onTemplateChange, role }: Props) {
   const { t } = useTranslation()
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{t('nav.decoys')}</SidebarGroupLabel>
+    <SidebarGroup className='py-0.5'>
+      <SidebarGroupLabel className={COLOR_FRENTE[2]}>{t('nav.decoys')}</SidebarGroupLabel>
       <SidebarMenu>
         {ALL_TEMPLATES.map(tpl => {
           const Icon = tpl.icon

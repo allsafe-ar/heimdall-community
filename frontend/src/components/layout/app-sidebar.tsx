@@ -45,16 +45,20 @@ export function AppSidebar({ token, tab, onTabChange, activeTemplate, onTemplate
         <AppTitle token={token} onGoHome={() => onTabChange('overview')} />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className='gap-1'>
         <NavGroup
           title={t('nav.monitor')}
+          frente={1}
           items={NAV_MONITOR}
           activeId={tab}
           onSelect={onTabChange}
           role={role}
         />
+        {/* Línea divisoria entre el frente de monitoreo y el de análisis. */}
+        <div aria-hidden className='mx-4 my-2 h-0.5 shrink-0 rounded-full bg-gradient-to-r from-amber-500 dark:from-primary to-amber-500/30 dark:to-primary/40' />
         <NavGroup
           title={t('nav.analysis')}
+          frente={2}
           items={NAV_ANALYSIS}
           activeId={tab}
           onSelect={onTabChange}
