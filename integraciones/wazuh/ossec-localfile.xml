@@ -1,0 +1,10 @@
+<!--
+  Heimdall - lectura del registro por el agente de Wazuh.
+  Agregar dentro de <ossec_config> en /var/ossec/etc/ossec.conf del AGENTE instalado en el servidor
+  de Heimdall, ajustando la ruta si se definió HEIMDALL_EVENT_LOG. Reiniciar wazuh-agent.
+-->
+<localfile>
+  <log_format>json</log_format>
+  <location>/opt/heimdall/backend/logs/eventos.json</location>
+  <label key="@source">heimdall</label>
+</localfile>

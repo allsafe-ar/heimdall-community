@@ -1,0 +1,93 @@
+<!--
+  Heimdall (AllSafe Security Solutions) - reglas para Wazuh 4.x
+  Lee el registro JSON de Heimdall (una línea por evento, log_format json).
+  Copiar a /var/ossec/etc/rules/heimdall_rules.xml en el manager y reiniciar wazuh-manager.
+
+  Rango de identificadores: 110100 a 110199 (reservado para Heimdall).
+  Todo lo que llega a un honeypot es tráfico no solicitado: los niveles reflejan qué tan lejos
+  llegó el atacante, no si es "malicioso" (eso ya se sabe).
+-->
+<group name="heimdall,honeypot,">
+
+  <!-- Base: cualquier línea del registro de Heimdall. -->
+  <rule id="110100" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="heimdall.sensor">\.+</field>
+    <description>Heimdall: evento del honeypot</description>
+  </rule>
+
+  <!-- Tráfico desde IPs propias (allowlist de Heimdall): no se alerta. Va primero a propósito. -->
+  <rule id="110101" level="0">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.internal">^true$</field>
+    <description>Heimdall: actividad desde una IP propia (allowlist)</description>
+  </rule>
+
+  <rule id="110110" level="3">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^SCAN$|^RECON$|^CRAWLER$|^RESEARCH$|^BOT$</field>
+    <description>Heimdall: reconocimiento ($(heimdall.type)) desde $(srcip) a $(protocol)/$(dstport)</description>
+    <mitre><id>T1595</id></mitre>
+    <group>recon,</group>
+  </rule>
+
+  <rule id="110111" level="5">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^PORTSCAN$</field>
+    <description>Heimdall: escaneo de puertos desde $(srcip)</description>
+    <mitre><id>T1046</id></mitre>
+    <group>recon,attack,</group>
+  </rule>
+
+  <rule id="110120" level="5">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^BRUTE$</field>
+    <description>Heimdall: intento de acceso con usuario '$(srcuser)' desde $(srcip) por $(protocol)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <!-- Fuerza bruta sostenida: 8 intentos de la misma IP en 2 minutos. -->
+  <rule id="110121" level="10" frequency="8" timeframe="120">
+    <if_matched_sid>110120</if_matched_sid>
+    <same_srcip />
+    <description>Heimdall: fuerza bruta sostenida desde $(srcip) por $(protocol)</description>
+    <mitre><id>T1110.001</id></mitre>
+    <group>authentication_failures,attack,</group>
+  </rule>
+
+  <rule id="110130" level="12">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^EXPLOIT$</field>
+    <description>Heimdall: intento de explotación desde $(srcip): $(heimdall.path)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>attack,exploit_attempt,</group>
+  </rule>
+
+  <!-- Interacción con el shell falso: el atacante entró y ejecutó comandos. -->
+  <rule id="110140" level="12">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^HUMAN$</field>
+    <field name="heimdall.command">\.+</field>
+    <description>Heimdall: comando ejecutado por $(srcip) en el shell señuelo: $(heimdall.command)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>attack,</group>
+  </rule>
+
+  <rule id="110141" level="8">
+    <if_sid>110100</if_sid>
+    <field name="heimdall.type">^HUMAN$</field>
+    <description>Heimdall: interacción manual desde $(srcip) por $(protocol)</description>
+    <group>attack,</group>
+  </rule>
+
+  <!-- Puntaje crítico de Heimdall, sea cual sea el tipo. Cuelga de las reglas por tipo (y no de la
+       base) porque Wazuh toma el primer hijo que coincide: como hermana nunca se evaluaría. -->
+  <rule id="110150" level="13">
+    <if_sid>110110, 110111, 110120, 110130, 110140, 110141</if_sid>
+    <field name="heimdall.severidad">^critica$</field>
+    <description>Heimdall: actividad crítica ($(heimdall.type)) desde $(srcip)</description>
+    <group>attack,</group>
+  </rule>
+
+</group>

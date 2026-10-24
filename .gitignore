@@ -13,3 +13,5 @@ coverage/
 uploads/
 DEPLOY.md
 setup-vm.sh
+backend/logs/
+logs/

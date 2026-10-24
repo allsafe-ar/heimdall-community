@@ -9,9 +9,9 @@
 
   *Powered by [AllSafe Security Solutions](https://www.allsafe.com.ar)*
 
-  ![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js&logoColor=white)
+  ![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?style=flat-square&logo=node.js&logoColor=white)
   ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
-  ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=flat-square&logo=mysql&logoColor=white)
+  ![MySQL](https://img.shields.io/badge/MySQL-8.4_LTS-4479A1?style=flat-square&logo=mysql&logoColor=white)
   ![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)
   ![Version](https://img.shields.io/badge/Version-Community-blue?style=flat-square)
 
@@ -38,6 +38,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 - **Contextual help** - A help button on every screen explaining what it is and what to do
 - **Email alerts** - A notice when a critical attack hits the decoy, and when the sensor stops receiving traffic at all
 - **Allowlist of your own IPs** - So your team testing the decoy does not pollute the metrics or fire false alerts
+- **SIEM-ready event log** - Every event is also written as one JSON line with Wazuh field names (source IP and port, destination port, protocol, user), MITRE ATT&CK technique and severity. Ready-made Wazuh rules included
 - **Real-time dashboard** - Live event feed via WebSocket with pause/resume without missing events
 - **Cyber Attack Map** - Real-time world map of attack origins with animated attack arcs converging on the defended host
 - **IP list** - Aggregated view of attacking IPs with hit counts and geolocation
@@ -72,6 +73,7 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | Contextual help on every screen | ✅ | ✅ |
 | Email alerts for a critical attack and for the sensor going quiet | ✅ | ✅ |
 | Allowlist of your own IPs (kept out of alerts and the report) | ✅ | ✅ |
+| JSON event log for SIEM + Wazuh rules with MITRE ATT&CK (real source and destination ports, separate user and password) | ✅ | ✅ |
 | Event history, statistics & IP geolocation | ✅ | ✅ |
 | TOTP 2FA + account lockout | ✅ | ✅ |
 | Dark / Light / System theme | ✅ | ✅ |
@@ -93,6 +95,9 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 | Alert customisation: by event type, human visits, campaigns, captured credentials | ❌ | ✅ |
 | Automatic threat intel enrichment by event type | ❌ | ✅ |
 | Blocklist feed (token URL for firewall / nginx / fail2ban) | ❌ | ✅ |
+| Integration API with read-only tokens (incremental events, attackers, campaigns) | ❌ | ✅ |
+| TheHive alerts with observables (manual or automatic by score) | ❌ | ✅ |
+| Gjallarhorn SOC integration (one case per attacking IP, playbook) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
 
 
@@ -128,6 +133,17 @@ Heimdall Community gives your Blue Team full visibility over who is probing your
 </div>
 
 ---
+
+## Requirements
+
+| Component | Version |
+|---|---|
+| Node.js | **24 LTS, 24.22.1 or later**. That release carries the October 2026 security fixes. Node.js 20 reached end of life and no longer gets patches, so it is not supported |
+| MySQL | 8.4 LTS recommended (8.0 or later works) |
+| Docker (option B) | Docker Engine 24+ with Compose v2. The images are `node:24-alpine` and `mysql:8.4` |
+| Operating system (option A) | Ubuntu 22.04 / 24.04 or Debian 12, with security updates applied |
+
+Every release is checked with `npm audit` on backend and frontend, and ships with **0 known vulnerabilities** in its dependencies. Keep Node.js on the latest 24.x patch and rebuild the Docker image (`docker compose build --pull`) when a new one comes out.
 
 ## Installation
 
@@ -171,6 +187,19 @@ Initial credentials (first run): user `admin`. There is no default password: it 
 
 ---
 
+## SIEM / Wazuh
+
+Heimdall writes every event to `backend/logs/eventos.json`, one JSON line per event, and rotates the file itself by size. The top-level fields use Wazuh's own names (`srcip`, `srcport`, `dstport`, `protocol`, `srcuser`), so geolocation and active response work with no extra decoder; the rest goes under `heimdall.*` (type, MITRE technique, severity, score, path, sensor).
+
+- Agent: add `integraciones/wazuh/ossec-localfile.xml` to `ossec.conf` on the Heimdall server.
+- Manager: copy `integraciones/wazuh/heimdall_rules.xml` to `/var/ossec/etc/rules/`.
+- Variables: `HEIMDALL_EVENT_LOG` (path, or `off`), `HEIMDALL_EVENT_LOG_MAX_MB` (50), `HEIMDALL_EVENT_LOG_KEEP` (5), `HEIMDALL_SENSOR` (sensor name, defaults to the hostname).
+- With Docker the log is mounted at `./logs/` next to `docker-compose.yml`.
+
+Step-by-step guide (Spanish) in `integraciones/wazuh/LEEME.md`.
+
+---
+
 ## Architecture
 
 ```
@@ -178,7 +207,10 @@ heimdall-community/
 ├── backend/
 │   ├── server.js       # Single-file backend - honeypot engine + REST API + WebSocket
 │   ├── templates/      # HTML decoy pages served as honeypots
+│   ├── logs/           # eventos.json - one JSON line per event, for the SIEM (created on first event)
 │   └── .env.example
+├── integraciones/
+│   └── wazuh/          # Wazuh rules, agent snippet and guide (LEEME.md)
 └── frontend/
     └── src/
         ├── pages/      # Dashboard, Events, IPs, Users, My Account
@@ -189,7 +221,7 @@ heimdall-community/
 ### Backend
 
 - Single-file Express server (`server.js`)
-- MySQL 8.0+ - tables auto-created on first start
+- MySQL 8.4 LTS (8.0+) - tables auto-created on first start
 - JWT authentication (12h expiry), TOTP 2FA, account lockout
 - WebSocket (Socket.IO) for live event streaming
 - Honeypot engine: captures IP, User-Agent, path, method, body - assigns threat score

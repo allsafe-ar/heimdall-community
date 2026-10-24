@@ -3,6 +3,28 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.5.0] - 2026-10-24
+
+### Added
+- **SIEM-ready event log.** Every event is also written to `backend/logs/eventos.json`, one JSON line per event, with Wazuh field names (`srcip`, `srcport`, `dstport`, `protocol`, `srcuser`) plus type, MITRE ATT&CK technique, severity, score and sensor under `heimdall.*`. Size-based rotation built in. Same format as Heimdall Pro.
+- **Wazuh package** in `integraciones/wazuh/`: rules (ids 110100-110150, with MITRE), agent snippet and guide. With Docker the log is mounted at `./logs/`.
+
+### Fixed
+- Events now store the **real source and destination ports** and the protocol. Before, the HTTP decoys stored no port at all.
+- The decoy login stores **user and password in separate fields**. In `detail` they were `user:password`, and a password containing `:` could not be split back.
+
+### Security
+- **Node.js 24 LTS.** The Docker image moves from `node:20-alpine` to `node:24-alpine` and the install script sets up Node.js 24. Node.js 20 reached end of life and did not get the October 2026 security fixes (among them a remote code execution in the Brotli decoder). `engines` now asks for 24.22.1 or later.
+- **MySQL 8.4 LTS** in `docker-compose.yml` (was 8.0, end of life). An existing data volume is upgraded in place on first start.
+- Dependencies back to **0 known vulnerabilities** (backend and frontend): `body-parser`, `proxy-addr`, `nodemailer`, `ip-address`, `dompurify`, `vite`, `source-map-js`.
+
+## [1.4.2 - 1.4.6] - 2026-10-01 / 2026-10-16
+
+- Second login step requires the signed challenge from the first one; disabled accounts are checked there too.
+- Security hardening: stricter `JWT_SECRET` check, input validation and size limits, output escaping, role checks on write routes, password re-authentication for sensitive changes. No async route error can take the process down.
+- One-time 2FA codes: a TOTP code cannot be reused within its window. Random initial admin password.
+- Menu ordered by area, with two tones of the system colour.
+
 ## [1.4.1] - 2026-09-22
 
 ### Security

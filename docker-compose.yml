@@ -3,7 +3,7 @@
 
 services:
   db:
-    image: mysql:8.0
+    image: mysql:8.4
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: heimdall_db
@@ -36,11 +36,15 @@ services:
       ADMIN_PASSWORD_INICIAL: ${ADMIN_PASSWORD_INICIAL:-}
       NODE_ENV: production
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3005}
+      # Nombre del sensor en el registro del SIEM (sin esto sería el id del contenedor)
+      HEIMDALL_SENSOR: ${HEIMDALL_SENSOR:-heimdall-community}
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - heimdall_uploads:/app/uploads
+      # Registro JSON para el SIEM: el agente de Wazuh del host lo lee desde ./logs/eventos.json
+      - ./logs:/app/logs
 
 volumes:
   heimdall_db:

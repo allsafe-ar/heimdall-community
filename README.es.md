@@ -9,9 +9,9 @@
 
   *Powered by [AllSafe Security Solutions](https://www.allsafe.com.ar)*
 
-  ![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js&logoColor=white)
+  ![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?style=flat-square&logo=node.js&logoColor=white)
   ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
-  ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=flat-square&logo=mysql&logoColor=white)
+  ![MySQL](https://img.shields.io/badge/MySQL-8.4_LTS-4479A1?style=flat-square&logo=mysql&logoColor=white)
   ![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)
   ![Version](https://img.shields.io/badge/Version-Community-blue?style=flat-square)
 
@@ -26,7 +26,7 @@ Heimdall Community es una plataforma de honeypot web libre y open source con das
 
 ---
 
-## ¿Qué es Heimdall Community?
+## Qué es Heimdall Community?
 
 Heimdall Community le da a tu Blue Team visibilidad total sobre quién está sondeando tu infraestructura:
 
@@ -38,6 +38,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 - **Ayuda contextual** - Un botón de ayuda en cada pantalla que explica qué es y qué hacer
 - **Alertas por correo** - Un aviso cuando un ataque crítico llega al señuelo, y cuando el sensor deja de recibir tráfico
 - **Allowlist de IPs propias** - Para que el equipo probando el señuelo no ensucie las métricas ni dispare alertas falsas
+- **Registro listo para el SIEM** - Cada evento se escribe también como una línea JSON con los nombres de campo de Wazuh (IP y puerto de origen, puerto de destino, protocolo, usuario), la técnica de MITRE ATT&CK y la severidad. Incluye las reglas de Wazuh
 - **Dashboard en tiempo real** - Feed de eventos en vivo via WebSocket con pause/resume sin perder eventos
 - **Cyber Attack Map** - Mapa mundial en tiempo real con el origen de los ataques y arcos animados que viajan hacia el host defendido
 - **Lista de IPs** - Vista agregada de IPs atacantes con conteo de hits y geolocalización
@@ -72,6 +73,7 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Ayuda contextual en cada pantalla | ✅ | ✅ |
 | Alertas por correo ante ataque crítico y ante sensor caído | ✅ | ✅ |
 | Allowlist de IPs propias (quedan fuera de las alertas y del informe) | ✅ | ✅ |
+| Registro JSON de eventos para el SIEM + reglas de Wazuh con MITRE ATT&CK (puertos reales de origen y destino, usuario y contraseña separados) | ✅ | ✅ |
 | Historial de eventos, estadísticas y geolocalización de IPs | ✅ | ✅ |
 | TOTP 2FA + lockout de cuenta | ✅ | ✅ |
 | Tema Dark / Light / Sistema | ✅ | ✅ |
@@ -93,6 +95,9 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 | Personalización de alertas: por tipo de evento, visitas humanas, campañas, credenciales capturadas | ❌ | ✅ |
 | Enriquecimiento automático de threat intel por tipo de evento | ❌ | ✅ |
 | Feed de bloqueo (URL con token para firewall / nginx / fail2ban) | ❌ | ✅ |
+| API de integración con tokens de solo lectura (eventos incrementales, atacantes, campañas) | ❌ | ✅ |
+| Alertas a TheHive con observables (manuales o automáticas por puntaje) | ❌ | ✅ |
+| Integración con el SOC de Gjallarhorn (un caso por IP atacante, playbook) | ❌ | ✅ |
 | Roles | `admin` / `viewer` | `admin` / `analista` / `auditor` / `viewer` |
 
 
@@ -129,6 +134,17 @@ Heimdall Community le da a tu Blue Team visibilidad total sobre quién está son
 </div>
 
 ---
+
+## Requisitos
+
+| Componente | Versión |
+|---|---|
+| Node.js | **24 LTS, 24.22.1 o posterior**. Esa versión trae los parches de seguridad de octubre de 2026. Node.js 20 está fuera de soporte y ya no recibe parches, por eso no se admite |
+| MySQL | 8.4 LTS recomendada (funciona desde 8.0) |
+| Docker (opción B) | Docker Engine 24 o posterior con Compose v2. Las imágenes son `node:24-alpine` y `mysql:8.4` |
+| Sistema operativo (opción A) | Ubuntu 22.04 / 24.04 o Debian 12, con las actualizaciones de seguridad al día |
+
+Cada versión se revisa con `npm audit` en backend y frontend y sale con **0 vulnerabilidades conocidas** en sus dependencias. Mantené Node.js en el último parche de la 24 y reconstruí la imagen de Docker (`docker compose build --pull`) cuando salga uno nuevo.
 
 ## Instalación
 
@@ -172,6 +188,19 @@ Credenciales iniciales (primer arranque): usuario `admin`. No hay contraseña po
 
 ---
 
+## SIEM / Wazuh
+
+Heimdall escribe cada evento en `backend/logs/eventos.json`, una línea JSON por evento, y rota el archivo solo por tamaño. Los campos de primer nivel usan los nombres propios de Wazuh (`srcip`, `srcport`, `dstport`, `protocol`, `srcuser`), así la geolocalización y la respuesta activa funcionan sin un decodificador extra. El resto va bajo `heimdall.*` (tipo, técnica de MITRE, severidad, puntaje, ruta, sensor).
+
+- Agente: sumar `integraciones/wazuh/ossec-localfile.xml` al `ossec.conf` del servidor de Heimdall.
+- Manager: copiar `integraciones/wazuh/heimdall_rules.xml` a `/var/ossec/etc/rules/`.
+- Variables: `HEIMDALL_EVENT_LOG` (ruta, u `off`), `HEIMDALL_EVENT_LOG_MAX_MB` (50), `HEIMDALL_EVENT_LOG_KEEP` (5), `HEIMDALL_SENSOR` (nombre del sensor, por defecto el del servidor).
+- Con Docker el registro queda montado en `./logs/`, al lado de `docker-compose.yml`.
+
+Guía paso a paso en `integraciones/wazuh/LEEME.md`.
+
+---
+
 ## Arquitectura
 
 ```
@@ -179,7 +208,10 @@ heimdall-community/
 ├── backend/
 │   ├── server.js       # Backend en un solo archivo - motor honeypot + REST API + WebSocket
 │   ├── templates/      # Páginas HTML señuelo servidas como honeypots
+│   ├── logs/           # eventos.json - una línea JSON por evento, para el SIEM (se crea con el primer evento)
 │   └── .env.example
+├── integraciones/
+│   └── wazuh/          # Reglas de Wazuh, configuración del agente y guía (LEEME.md)
 └── frontend/
     └── src/
         ├── pages/      # Dashboard, Eventos, IPs, Usuarios, Mi Cuenta
@@ -190,7 +222,7 @@ heimdall-community/
 ### Backend
 
 - Servidor Express en un solo archivo (`server.js`)
-- MySQL 8.0+ - tablas creadas automáticamente en el primer arranque
+- MySQL 8.4 LTS (8.0+) - tablas creadas automáticamente en el primer arranque
 - Autenticación JWT (expiración 12h), TOTP 2FA, lockout de cuentas
 - WebSocket (Socket.IO) para streaming de eventos en vivo
 - Motor honeypot: captura IP, User-Agent, path, método, body - asigna threat score
@@ -289,7 +321,7 @@ Si modificás y desplegás Heimdall Community como servicio, debés publicar tus
 
 ## Seguridad
 
-¿Encontraste una vulnerabilidad? Reportala de forma privada - ver [SECURITY.md](SECURITY.md).
+Encontraste una vulnerabilidad? Reportala de forma privada - ver [SECURITY.md](SECURITY.md).
 
 ---
 

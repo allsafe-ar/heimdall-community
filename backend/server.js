@@ -24,6 +24,10 @@ const rateLimit  = require("express-rate-limit");
 const threatIntel = require("./integrations/threat-intel");
 const mailer      = require("./mailer");
 const APP_VERSION = require("./package.json").version;
+// Nombre del sensor en el registro: con varios Heimdall alimentando un mismo SIEM, es lo que
+// dice de dónde vino cada evento. Por defecto, el nombre del servidor.
+const SENSOR = (process.env.HEIMDALL_SENSOR || require("os").hostname()).slice(0, 64);
+const registroEventos = require("./registro-eventos").crearRegistro({ sensor: SENSOR, version: APP_VERSION });
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const PORT        = parseInt(process.env.PORT        || "3005");
@@ -417,7 +421,7 @@ function serveTemplate(res, name) {
 // ─── Event logging + broadcast ────────────────────────────────────────────────
 const recortar = (v, max) => (typeof v === "string" && v.length > max ? v.slice(0, max) : v);
 
-async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", port = null, ua = "", signals = null }) {
+async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", port = null, srcPort = null, dstPort = null, username = null, password = null, ua = "", signals = null }) {
   const geo   = geoLookup(rawIp);
   const score = threatScore(type);
   const ts    = new Date();
@@ -432,7 +436,15 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     method,
     path:         urlPath,
     detail:       (detail || "").slice(0, 500),
-    port,
+    port:         dstPort ?? port,
+    src_port:     srcPort,
+    proto:        (dstPort ?? port) === 443 ? "https" : "http",
+    event_uid:    require("crypto").randomUUID(),
+    sensor:       SENSOR,
+    // Usuario y contraseña en su propio campo: en `detail` van como "usuario:clave" y una
+    // contraseña con ":" no se podía separar después.
+    username:     username || null,
+    password:     password || null,
     ua:           (ua || "").slice(0, 300),
     signals:      signals || null,
     internal:     esIpPropia(geo.ip) ? 1 : 0,
@@ -443,12 +455,16 @@ async function logEvent({ rawIp, type, method = "", urlPath = "", detail = "", p
     // 🔴 Todo valor se recorta al ancho de su columna ANTES del INSERT: con un path de más de
     // 500 caracteres MySQL rechazaba la fila ("Data too long") y el ataque no quedaba
     // registrado. Bastaba con prefijar relleno para pasar sin dejar rastro.
-    await qRun(
-      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, internal, ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    const r = await qRun(
+      "INSERT INTO events (ip, country, city, lat, lon, type, method, path, detail, port, user_agent, threat_score, signals, internal, ts, event_uid, sensor, src_port, proto, username, password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [recortar(ev.ip, 45), recortar(ev.country, 2), recortar(ev.city, 100), ev.lat, ev.lon, ev.type, recortar(ev.method, 10),
-       recortar(ev.path, 500), ev.detail, ev.port, ev.ua, ev.threat_score, recortar(ev.signals, 80), ev.internal, ts]
+       recortar(ev.path, 500), ev.detail, ev.port, ev.ua, ev.threat_score, recortar(ev.signals, 80), ev.internal, ts,
+       ev.event_uid, ev.sensor, ev.src_port, ev.proto, recortar(ev.username, 200), recortar(ev.password, 200)]
     );
+    ev.id = r && r.insertId ? Number(r.insertId) : null;
   } catch (e) { console.error("[log]", e.message); }
+  // Copia en disco para el SIEM (Wazuh). Nunca frena la captura: ver registro-eventos.js.
+  registroEventos.escribir(ev);
   io.emit("event", ev);
   // Sin await: si el correo falla, el evento ya quedó guardado igual.
   try { evaluarAlertasDeEvento(ev); } catch { /* nunca frena la captura */ }
@@ -517,6 +533,29 @@ function clientIp(req) {
   return String(req.ip || req.socket.remoteAddress || "").replace(/^::ffff:/, "");
 }
 
+// ─── Puertos de la conexión (v1.5) ───────────────────────────────────────────
+const puertoValido = (v) => { const n = Number(v); return Number.isInteger(n) && n > 0 && n < 65536 ? n : null; };
+
+/** Trampa en :80/:443 sin proxy: los dos puertos salen del socket. */
+function puertosDelSocket(req) {
+  return { srcPort: puertoValido(req.socket?.remotePort), dstPort: puertoValido(req.socket?.localPort) };
+}
+
+/**
+ * Pedido que pudo pasar por el proxy. Si la IP que resolvió Express no es la del socket, quien
+ * conectó fue el proxy: su puerto de origen no es el del atacante, así que se toma de
+ * `X-Real-Port` (nginx: `proxy_set_header X-Real-Port $remote_port;`) o queda en null. Ese
+ * encabezado solo se cree en el mismo caso en que se cree X-Forwarded-For, nunca de un directo.
+ */
+function puertosDelPedido(req) {
+  const delSocket = String(req.socket?.remoteAddress || "").replace(/^::ffff:/, "");
+  if (clientIp(req) === delSocket) return puertosDelSocket(req);
+  return {
+    srcPort: puertoValido(req.headers["x-real-port"]),
+    dstPort: puertoValido(req.headers["x-forwarded-port"]) || (req.protocol === "https" ? 443 : 80),
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRAP ROUTES  (must be declared before /heimdall)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -542,7 +581,7 @@ async function capturarLoginSenuelo(req, res) {
   const pass = aTexto(body.password || body.pass || body.pwd).slice(0, 100);
   const detail = user ? `${user}:${pass}` : aTexto(body).slice(0, 200);
   const type = looksLikeRealBrowser(ua, req) ? "HUMAN" : "BRUTE";
-  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, ua, signals: signalsTag(browserSignals(req)) });
+  await logEvent({ rawIp: ip, type, method: "POST", urlPath: req.path, detail, username: user, password: user ? pass : null, ua, signals: signalsTag(browserSignals(req)), ...puertosDelPedido(req) });
   await new Promise(r => setTimeout(r, 600 + Math.random() * 700));
   res.status(401).json({ error: "Usuario o contraseña incorrectos." });
 }
@@ -555,7 +594,7 @@ async function senueloAnteError(err, req, res) {
     const ua = aTexto(req.headers["user-agent"]);
     const motivo = err && err.type ? err.type : "error";
     await logEvent({ rawIp: clientIp(req), type: req.method === "POST" && RUTAS_LOGIN_SENUELO.includes(req.path) ? "BRUTE" : classifyHttp(req.method, req.path, ua, req),
-      method: req.method, urlPath: req.path, detail: `cuerpo ilegible (${motivo})`, ua, signals: signalsTag(browserSignals(req)) });
+      method: req.method, urlPath: req.path, detail: `cuerpo ilegible (${motivo})`, ua, signals: signalsTag(browserSignals(req)), ...puertosDelPedido(req) });
   } catch (e) { console.error("[Heimdall] señuelo:", e && e.message); }
   if (res.headersSent) return;
   if (req.method === "POST" && RUTAS_LOGIN_SENUELO.includes(req.path))
@@ -582,7 +621,7 @@ app.use(async (req, res, next) => {
   // detail guardaba una copia del user_agent, que ya tiene columna propia: se
   // prioriza la query string, que es la evidencia de por qué se clasificó así.
   const qs = (req.originalUrl || "").slice(req.path.length);
-  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
+  await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)), ...puertosDelPedido(req) });
   // Return the trap page — keeps attacker engaged
   serveTemplate(res, activeTemplate);
 });
@@ -1160,7 +1199,7 @@ function buildTrapApp() {
     const ua   = req.headers["user-agent"] || "";
     const type = classifyHttp(req.method, req.path, ua, req);
     const qs = (req.originalUrl || "").slice(req.path.length);
-    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)) });
+    await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)), ...puertosDelPedido(req) });
     serveTemplate(res, activeTemplate);
   });
 
@@ -1246,6 +1285,13 @@ async function initDB() {
   // Migraciones additivas de la v1.3.0: categorías nuevas y señales de navegador
   try { await qRun("ALTER TABLE events ADD COLUMN signals VARCHAR(80) DEFAULT NULL"); } catch {}
   try { await qRun("ALTER TABLE events ADD COLUMN internal TINYINT(1) NOT NULL DEFAULT 0"); } catch {}
+  // v1.5: evento estructurado para el SIEM. Nullable: los eventos anteriores no tienen estos
+  // datos y no se inventan (ver evento-normalizado.js).
+  for (const col of ["event_uid CHAR(36) DEFAULT NULL", "sensor VARCHAR(64) DEFAULT NULL",
+                     "src_port SMALLINT UNSIGNED DEFAULT NULL", "proto VARCHAR(10) DEFAULT NULL",
+                     "username VARCHAR(200) DEFAULT NULL", "password VARCHAR(200) DEFAULT NULL"]) {
+    try { await qRun(`ALTER TABLE events ADD COLUMN ${col}`); } catch {}
+  }
   try { await qRun("ALTER TABLE events MODIFY COLUMN type ENUM('BRUTE','PORTSCAN','SCAN','BOT','RECON','HUMAN','EXPLOIT','CRAWLER','RESEARCH') NOT NULL"); } catch {}
 
   await qRun(`CREATE TABLE IF NOT EXISTS audit_log (
