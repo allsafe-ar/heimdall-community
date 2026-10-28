@@ -10,6 +10,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 - `install.sh` now requires **Node.js 24.22.1 or later**, the same as the README and `engines`. Before, any 24.x passed the check, including releases without the Brotli fix (CVE-2026-111497). If the installed Node.js is older, it upgrades it from NodeSource and stops with a clear message if it still cannot meet the minimum.
 
 ### Fixed
+- **Native install (`install.sh`): the dashboard login failed with 405 and the root showed the app instead of the decoy.** nginx served the frontend as static files and only proxied `/api/`, while the dashboard API lives under `/heimdall/api/`. nginx now proxies everything to the backend, as Heimdall Pro does: the dashboard is under `/heimdall/` and the root is the decoy.
+- **Reinstalling with `install.sh` left the app without database access.** If the database user already existed, it kept its old password and the backend could not connect. The installer now sets the new password on the existing user.
+- `install.sh` is committed as executable.
 - **Docker: first start no longer restarts the app.** The database healthcheck now checks over TCP. Over the socket it passed while MySQL was still on its temporary first-run server, and the app connected too early and restarted until the real server came up.
 - **Docker: the HTTP and HTTPS traps were not reachable.** `docker-compose.yml` only published the dashboard port, so ports 80 and 443 stayed inside the container, and the image had no certificate, so the HTTPS trap never started. Both ports are now published (`TRAP_HTTP_PORT` and `TRAP_HTTPS_PORT` in `.env` to change them) and each build generates its own self-signed certificate.
 

@@ -97,6 +97,8 @@ MYSQL_ARGS=(); [ -n "$MYSQL_ROOT_PASS" ] && MYSQL_ARGS=(-p"$MYSQL_ROOT_PASS")
 mysql -uroot "${MYSQL_ARGS[@]}" <<SQL 2>/dev/null || warn "DB may already exist"
 CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
+-- Si el usuario ya existía (instalación anterior), toma la contraseña nueva: si no, la app no entra.
+ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
@@ -136,11 +138,10 @@ cat > /etc/nginx/sites-available/heimdall <<NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
-    root ${INSTALL_DIR}/frontend/dist;
-    index index.html;
-    location /heimdall/ { try_files \$uri \$uri/ /index.html; }
-    location / { try_files \$uri \$uri/ /index.html; }
-    location /api/ {
+    # Todo va al backend, igual que en Heimdall Pro: el backend sirve el panel bajo /heimdall/ y
+    # el senuelo en la raiz. Servir el frontend desde nginx dejaba /heimdall/api/ sin backend
+    # (405 al iniciar sesion) y mostraba la aplicacion en la raiz en vez del senuelo.
+    location / {
         proxy_pass http://localhost:${BACKEND_PORT};
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -149,13 +150,6 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         # nginx es el borde: pisa la cabecera que mande el cliente (el backend confía en ella
         # solo cuando el pedido llega desde loopback, ver TRUST_PROXY en server.js)
-        proxy_set_header X-Forwarded-For \$remote_addr;
-    }
-    location /socket.io/ {
-        proxy_pass http://localhost:${BACKEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header X-Forwarded-For \$remote_addr;
     }
 }
