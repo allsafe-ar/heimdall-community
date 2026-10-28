@@ -16,5 +16,10 @@ COPY backend/package*.json ./
 RUN npm ci --production --silent
 COPY backend/ ./
 COPY --from=frontend-builder /app/dist /frontend/dist
-EXPOSE 3005
+# Certificado autofirmado propio de cada build para la trampa HTTPS (:443). Sin él, el 443 queda apagado.
+RUN apk add --no-cache openssl \
+ && mkdir -p ssl \
+ && [ -f ssl/key.pem ] || openssl req -x509 -newkey rsa:2048 -keyout ssl/key.pem -out ssl/cert.pem \
+      -days 3650 -nodes -subj "/CN=localhost" 2>/dev/null
+EXPOSE 3005 80 443
 CMD ["node", "server.js"]

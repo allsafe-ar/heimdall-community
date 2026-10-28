@@ -13,7 +13,9 @@ services:
     volumes:
       - heimdall_db:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # Por TCP y no por socket: en el primer arranque MySQL levanta un servidor temporal sin red
+      # que ya responde por socket, y la app se conectaba antes de tiempo y se reiniciaba.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -25,6 +27,9 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3005}:3005"
+      # Trampas HTTP y HTTPS. Si el host ya usa el 80 o el 443, cambiarlos en .env
+      - "${TRAP_HTTP_PORT:-80}:80"
+      - "${TRAP_HTTPS_PORT:-443}:443"
     environment:
       PORT: 3005
       DB_HOST: db

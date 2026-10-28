@@ -168,6 +168,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
+El contenedor publica el panel en el `3005` y las trampas HTTP y HTTPS en el `80` y el `443` (con un certificado autofirmado que se genera al construir la imagen). Si el host ya usa el 80 o el 443, definí `TRAP_HTTP_PORT` y `TRAP_HTTPS_PORT` en `.env`. El panel está bajo `/heimdall/`; la raíz de cada puerto es el señuelo.
+
 ### Opción C - Manual
 
 ```bash

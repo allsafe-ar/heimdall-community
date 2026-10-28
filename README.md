@@ -167,6 +167,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
+The container publishes the dashboard on `3005` and the HTTP and HTTPS traps on `80` and `443` (self-signed certificate generated at build time). If the host already uses 80 or 443, set `TRAP_HTTP_PORT` and `TRAP_HTTPS_PORT` in `.env`. The dashboard lives under `/heimdall/`; the root of every port is the decoy.
+
 ### Option C - Manual
 
 ```bash

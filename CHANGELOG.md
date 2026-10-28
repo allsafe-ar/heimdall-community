@@ -3,6 +3,16 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.5.1] - 2026-10-28
+
+### Security
+- `qs` 6.16.2 in the backend (moderate advisory GHSA-6pq8-jhm2-2vcw, denial of service in `qs.stringify`). Back to **0 known vulnerabilities**.
+- `install.sh` now requires **Node.js 24.22.1 or later**, the same as the README and `engines`. Before, any 24.x passed the check, including releases without the Brotli fix (CVE-2026-111497). If the installed Node.js is older, it upgrades it from NodeSource and stops with a clear message if it still cannot meet the minimum.
+
+### Fixed
+- **Docker: first start no longer restarts the app.** The database healthcheck now checks over TCP. Over the socket it passed while MySQL was still on its temporary first-run server, and the app connected too early and restarted until the real server came up.
+- **Docker: the HTTP and HTTPS traps were not reachable.** `docker-compose.yml` only published the dashboard port, so ports 80 and 443 stayed inside the container, and the image had no certificate, so the HTTPS trap never started. Both ports are now published (`TRAP_HTTP_PORT` and `TRAP_HTTPS_PORT` in `.env` to change them) and each build generates its own self-signed certificate.
+
 ## [1.5.0] - 2026-10-24
 
 ### Added
