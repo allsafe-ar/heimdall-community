@@ -3,6 +3,11 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.5.2] - 2026-10-31
+
+### Changed
+- **Current AllSafe logo.** The sidebar, the PDF report and the notification emails used the old logo. They now use the same one as the rest of the AllSafe systems.
+
 ## [1.5.1] - 2026-10-28
 
 ### Security
