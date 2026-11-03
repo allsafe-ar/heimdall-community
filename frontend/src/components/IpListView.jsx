@@ -156,7 +156,7 @@ export default function IpListView({ token, onIpClick }) {
                       return (
                         <span
                           key={t}
-                          className={`font-terminal text-[10px] px-1.5 py-0.5 rounded border ${m.color} border-current/20`}
+                          className={`font-terminal text-xs px-1.5 py-0.5 rounded border ${m.color} border-current/20`}
                         >
                           {m.label}
                         </span>

@@ -258,7 +258,7 @@ export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
                 }
                 {t('account.2fa_title')}
               </h2>
-              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${has2FA ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-muted border-border text-muted-foreground'}`}>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${has2FA ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-muted border-border text-muted-foreground'}`}>
                 {has2FA ? t('account.2fa_active') : t('account.2fa_inactive')}
               </span>
             </div>
@@ -410,7 +410,7 @@ export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
                   <span className="text-xs text-muted-foreground italic">{t('account.branding_no_logo')}</span>
                 )}
                 {pendingLogo && (
-                  <span className="absolute top-1 right-2 text-[10px] font-medium text-amber-500">{t('account.branding_pending')}</span>
+                  <span className="absolute top-1 right-2 text-xs font-medium text-amber-500">{t('account.branding_pending')}</span>
                 )}
               </div>
 
@@ -481,7 +481,7 @@ export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
                 className="hidden"
                 onChange={handleLogoUpload}
               />
-              <p className="text-[11px] text-muted-foreground mt-3">{t('account.branding_limit')}</p>
+              <p className="text-xs text-muted-foreground mt-3">{t('account.branding_limit')}</p>
             </div>
           )}
 

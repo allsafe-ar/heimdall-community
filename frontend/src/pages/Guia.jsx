@@ -128,7 +128,7 @@ export default function Guia({ proOnly = false }) {
         <div key={s.id}>
           <h3 className='text-sm font-semibold text-foreground mb-2 flex items-center gap-2'>
             {s[lang]}
-            {s.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
+            {s.pro && <span className='text-xs font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
           </h3>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
             {s.terms.map(term => {
@@ -137,7 +137,7 @@ export default function Guia({ proOnly = false }) {
                 <div key={term.k} className='bg-card border border-border rounded-xl p-4'>
                   <div className='flex items-center gap-2 mb-1.5'>
                     <span className={`font-semibold ${term.color || 'text-foreground'}`}>{c.t}</span>
-                    {term.pro && <span className='text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
+                    {term.pro && <span className='text-xs font-bold px-1.5 py-0.5 rounded-full border border-amber-400/50 text-amber-700 dark:text-amber-400'>PRO</span>}
                   </div>
                   <p className='text-xs text-muted-foreground leading-relaxed'>{c.d}</p>
                 </div>

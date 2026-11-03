@@ -147,7 +147,7 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                         <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${meta.dot}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={`font-terminal text-[11px] ${meta.color}`}>{ev.type}</span>
+                            <span className={`font-terminal text-xs ${meta.color}`}>{ev.type}</span>
                             {ev.path && (
                               <span className="text-muted-foreground text-xs truncate">{ev.path}</span>
                             )}
@@ -159,11 +159,11 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                             )}
                           </div>
                           {(ev.type === 'BRUTE' || ev.type === 'HUMAN') && ev.detail && (
-                            <div className="font-terminal text-[10px] text-yellow-600/80 mt-0.5 truncate" title={ev.detail}>
+                            <div className="font-terminal text-xs text-yellow-600/80 mt-0.5 truncate" title={ev.detail}>
                               → {ev.detail}
                             </div>
                           )}
-                          <div className="text-muted-foreground text-[10px] font-terminal mt-0.5">
+                          <div className="text-muted-foreground text-xs font-terminal mt-0.5">
                             {fmtDateTime(ev.ts)}
                           </div>
                         </div>
@@ -221,10 +221,10 @@ export default function IpProfile({ ip, token, onClose, isAdmin = false }) {
                   )}
 
                   {data.intel.enriched_at && (
-                    <div className="text-muted-foreground text-[10px] font-terminal">Enriquecido: {fmtDateTime(data.intel.enriched_at)}</div>
+                    <div className="text-muted-foreground text-xs font-terminal">Enriquecido: {fmtDateTime(data.intel.enriched_at)}</div>
                   )}
 
-                  <div className="text-muted-foreground text-[10px] border-t border-border pt-2">
+                  <div className="text-muted-foreground text-xs border-t border-border pt-2">
                     Fuentes sin clave: ASN (Team Cymru), nodos de salida de Tor, FeodoTracker y C2-Tracker.
                     AbuseIPDB, Shodan y GreyNoise, el análisis en lote y el automático están en la edición Pro.
                   </div>

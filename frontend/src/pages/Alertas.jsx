@@ -147,7 +147,7 @@ export default function Alertas({ token }) {
           </div>
         </div>
 
-        <p className='text-[11px] text-muted-foreground mt-3 border-t border-border pt-3'>
+        <p className='text-xs text-muted-foreground mt-3 border-t border-border pt-3'>
           {t('alerts.pro_note')}
         </p>
       </div>
@@ -193,7 +193,7 @@ export default function Alertas({ token }) {
             <input type='password' className={campo} value={cfg.pass} autoComplete='new-password'
               placeholder={cfg.pass_set ? '••••••••' : ''}
               onChange={e => setCfg({ ...cfg, pass: e.target.value })} />
-            <p className='text-[11px] text-muted-foreground mt-1'>{t('alerts.pass_hint')}</p>
+            <p className='text-xs text-muted-foreground mt-1'>{t('alerts.pass_hint')}</p>
           </div>
           <div>
             <label className={etiqueta}>{t('alerts.from')}</label>
@@ -220,7 +220,7 @@ export default function Alertas({ token }) {
           className='w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground font-terminal focus:outline-none focus:ring-1 focus:ring-primary'
         />
         {allowlist && (
-          <p className='text-[11px] text-muted-foreground mt-1.5'>{t('allowlist.count', { count: allowlist.count })}</p>
+          <p className='text-xs text-muted-foreground mt-1.5'>{t('allowlist.count', { count: allowlist.count })}</p>
         )}
       </div>
 
@@ -248,7 +248,7 @@ export default function Alertas({ token }) {
                 <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${a.ok ? 'bg-green-500' : 'bg-red-500'}`} />
                 <div className='min-w-0 flex-1'>
                   <div className='text-sm text-foreground truncate'>{a.subject}</div>
-                  <div className='text-[11px] text-muted-foreground font-terminal'>
+                  <div className='text-xs text-muted-foreground font-terminal'>
                     {fmtDateTime(a.ts)} · {a.trigger_type}
                     {!a.ok && a.error ? ` · ${a.error}` : ''}
                   </div>

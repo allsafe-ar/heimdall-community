@@ -94,7 +94,7 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
               <button
                 key={t.value}
                 onClick={() => setFilter(t.value)}
-                className={`font-terminal text-[10px] px-2 py-0.5 rounded border transition-all ${
+                className={`font-terminal text-xs px-2 py-0.5 rounded border transition-all ${
                   filter === t.value
                     ? 'border-primary text-primary bg-primary/10'
                     : 'border-border text-muted-foreground/50 hover:border-border/80 hover:text-muted-foreground'
@@ -108,7 +108,7 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
           {/* Pause / resume */}
           <button
             onClick={onTogglePause}
-            className="font-terminal text-[10px] px-3 py-1 rounded border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
+            className="font-terminal text-xs px-3 py-1 rounded border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
           >
             {paused ? '▶ REANUDAR' : '⏸ PAUSAR'}
           </button>
@@ -123,10 +123,10 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
 
       {/* Column headers */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/20 shrink-0">
-        <span className="font-terminal text-[10px] text-muted-foreground/40 w-[72px] text-right">HORA</span>
-        <span className="font-terminal text-[10px] text-muted-foreground/40 w-[76px]">TIPO</span>
-        <span className="font-terminal text-[10px] text-muted-foreground/40 w-[120px]">IP ORIGEN</span>
-        <span className="font-terminal text-[10px] text-muted-foreground/40">GEO / DETALLE</span>
+        <span className="font-terminal text-xs text-muted-foreground/40 w-[72px] text-right">HORA</span>
+        <span className="font-terminal text-xs text-muted-foreground/40 w-[76px]">TIPO</span>
+        <span className="font-terminal text-xs text-muted-foreground/40 w-[120px]">IP ORIGEN</span>
+        <span className="font-terminal text-xs text-muted-foreground/40">GEO / DETALLE</span>
       </div>
 
       {/* Log body */}
@@ -139,7 +139,7 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground/30 gap-2">
             <div className="text-3xl">👁</div>
             <div className="font-terminal text-xs tracking-widest">ESPERANDO ACTIVIDAD...</div>
-            <div className="font-terminal text-[10px] text-muted-foreground/20">heimdall está escuchando</div>
+            <div className="font-terminal text-xs text-muted-foreground/20">heimdall está escuchando</div>
           </div>
         ) : (
           <>
@@ -153,10 +153,10 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
 
       {/* Footer */}
       <div className="px-4 py-1.5 border-t border-border bg-muted/20 shrink-0 flex items-center justify-between">
-        <span className="font-terminal text-[10px] text-muted-foreground/40">
+        <span className="font-terminal text-xs text-muted-foreground/40">
           {visible.length} eventos{filter !== 'TODOS' ? ` (${types.find(t => t.value === filter)?.label ?? filter})` : ''} · {events.length} total
         </span>
-        <span className="font-terminal text-[10px] text-muted-foreground/30 animate-blink">█</span>
+        <span className="font-terminal text-xs text-muted-foreground/30 animate-blink">█</span>
       </div>
     </div>
   )

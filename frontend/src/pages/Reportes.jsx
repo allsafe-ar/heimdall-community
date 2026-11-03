@@ -100,7 +100,7 @@ export default function Reportes({ token }) {
           ].map((k, i) => (
             <div key={i} className='bg-card border border-border rounded-xl p-3'>
               <div className={`text-2xl font-bold ${k.danger ? 'text-red-700 dark:text-red-400' : 'text-foreground'}`}>{k.v}</div>
-              <div className='text-[11px] text-muted-foreground mt-0.5'>{k.l}</div>
+              <div className='text-xs text-muted-foreground mt-0.5'>{k.l}</div>
             </div>
           ))}
         </div>
@@ -133,7 +133,7 @@ export default function Reportes({ token }) {
                 const bm = behaviorMeta(ip.behavior_level)
                 return (
                   <tr key={ip.ip} className='border-t border-border'>
-                    <td className='py-1.5 font-terminal text-foreground'>{ip.ip} {ip.campaign && <span className='text-[9px] text-pink-700 dark:text-pink-400'>CAMPAÑA</span>}</td>
+                    <td className='py-1.5 font-terminal text-foreground'>{ip.ip} {ip.campaign && <span className='text-xs text-pink-700 dark:text-pink-400'>CAMPAÑA</span>}</td>
                     <td className='py-1.5 text-muted-foreground'>{ip.flag} {ip.country}</td>
                     <td className='py-1.5 text-right text-muted-foreground tabular-nums'>{ip.hits}</td>
                     <td className={`py-1.5 text-right font-medium ${ip.behavior_score != null ? bm.color : 'text-muted-foreground'}`}>{ip.behavior_score != null ? `${ip.behavior_score} ${bm.label}` : '—'}</td>

@@ -105,7 +105,7 @@ function CustomTemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin, 
         <div className='flex items-center gap-2'>
           <span className='text-sm font-semibold text-foreground truncate'>{tpl.name}</span>
           {isActive && (
-            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
+            <span className='flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
               <span className='w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse' />
               {t('senualos.active')}
             </span>
@@ -185,7 +185,7 @@ function TemplateCard({ tpl, isActive, isPinned, onActivate, onTogglePin }) {
         <div className='flex items-center gap-2'>
           <span className='text-sm font-semibold text-foreground truncate'>{tpl.name}</span>
           {isActive && (
-            <span className='flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
+            <span className='flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 shrink-0'>
               <span className='w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse' />
               {t('senualos.active')}
             </span>

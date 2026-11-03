@@ -128,8 +128,8 @@ export default function OverviewCharts({ events, stats }) {
               {TYPE_BARS.filter(b => (chartData[0]?.[b.key] ?? 0) > 0).map(b => (
                 <div key={b.key} className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-sm flex-shrink-0" style={{ background: b.fill }} />
-                  <span className="font-terminal text-[10px] text-muted-foreground">{b.label}</span>
-                  <span className="font-terminal text-[10px] font-bold" style={{ color: b.fill }}>
+                  <span className="font-terminal text-xs text-muted-foreground">{b.label}</span>
+                  <span className="font-terminal text-xs font-bold" style={{ color: b.fill }}>
                     {(chartData[0]?.[b.key] ?? 0).toLocaleString()}
                   </span>
                 </div>

@@ -34,7 +34,7 @@ function KpiCard({ label, value, sub, color, Icon }) {
           />
         )}
         {/* Label */}
-        <p className="relative z-10 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 pr-14 leading-tight">
+        <p className="relative z-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 pr-14 leading-tight">
           {label}
         </p>
         {/* Value — font scales down as content length grows */}
@@ -51,7 +51,7 @@ function KpiCard({ label, value, sub, color, Icon }) {
         </p>
         {/* Sub description */}
         {sub && (
-          <p className="relative z-10 text-[11px] mt-2 text-muted-foreground pr-14 truncate">
+          <p className="relative z-10 text-xs mt-2 text-muted-foreground pr-14 truncate">
             {sub}
           </p>
         )}
