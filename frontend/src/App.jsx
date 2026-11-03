@@ -35,10 +35,10 @@ class ErrorBoundary extends Component {
 function Corners({ children, className = '' }) {
   return (
     <div className={`relative ${className}`}>
-      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-600/50 rounded-tl" />
-      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-red-600/50 rounded-tr" />
-      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-red-600/50 rounded-bl" />
-      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-600/50 rounded-br" />
+      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/50 rounded-tl" />
+      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary/50 rounded-tr" />
+      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary/50 rounded-bl" />
+      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary/50 rounded-br" />
       {children}
     </div>
   )
@@ -106,16 +106,16 @@ function TotpPage({ userId, onLogin, onBack }) {
                 required
                 autoFocus
                 style={{ width: '100%', background: 'oklch(1 0 0 / 12%)', border: '1px solid oklch(1 0 0 / 12%)', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 0.75rem', color: 'oklch(0.96 0.005 250)', fontSize: '1.25rem', fontFamily: 'monospace', letterSpacing: '0.4em', textAlign: 'center', outline: 'none', lineHeight: '1.25rem' }}
-                onFocus={e => { e.target.style.borderColor = 'oklch(0.535 0.233 22.3)'; e.target.style.boxShadow = '0 0 0 2px oklch(0.535 0.233 22.3 / 20%)' }}
+                onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent)' }}
                 onBlur={e => { e.target.style.borderColor = 'oklch(1 0 0 / 12%)'; e.target.style.boxShadow = 'none' }}
               />
             </div>
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              style={{ width: '100%', background: 'oklch(0.535 0.233 22.3)', color: 'oklch(0.98 0.003 0)', border: 'none', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 1rem', height: '2.25rem', fontSize: '0.875rem', fontWeight: 500, fontFamily: 'inherit', cursor: (loading || code.length !== 6) ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.25rem', opacity: (loading || code.length !== 6) ? 0.5 : 1 }}
+              style={{ width: '100%', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 1rem', height: '2.25rem', fontSize: '0.875rem', fontWeight: 500, fontFamily: 'inherit', cursor: (loading || code.length !== 6) ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.25rem', opacity: (loading || code.length !== 6) ? 0.5 : 1 }}
             >
-              {loading ? <span style={{ width: '0.875rem', height: '0.875rem', border: '2px solid oklch(0.98 0.003 0 / 30%)', borderTopColor: 'oklch(0.98 0.003 0)', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0, display: 'inline-block' }} /> : null}
+              {loading ? <span style={{ width: '0.875rem', height: '0.875rem', border: '2px solid color-mix(in oklch, var(--primary-foreground) 30%, transparent)', borderTopColor: 'var(--primary-foreground)', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0, display: 'inline-block' }} /> : null}
               {loading ? 'Verificando...' : 'Verificar'}
             </button>
           </form>
@@ -213,7 +213,7 @@ function LoginPage({ onLogin }) {
                 autoComplete="username"
                 required
                 style={{ width: '100%', background: 'oklch(1 0 0 / 12%)', border: '1px solid oklch(1 0 0 / 12%)', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 0.75rem', color: 'oklch(0.96 0.005 250)', fontSize: '0.875rem', fontFamily: 'inherit', outline: 'none', lineHeight: '1.25rem' }}
-                onFocus={e => { e.target.style.borderColor = 'oklch(0.535 0.233 22.3)'; e.target.style.boxShadow = '0 0 0 2px oklch(0.535 0.233 22.3 / 20%)' }}
+                onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent)' }}
                 onBlur={e => { e.target.style.borderColor = 'oklch(1 0 0 / 12%)'; e.target.style.boxShadow = 'none' }}
               />
             </div>
@@ -232,7 +232,7 @@ function LoginPage({ onLogin }) {
                   autoComplete="current-password"
                   required
                   style={{ width: '100%', background: 'oklch(1 0 0 / 12%)', border: '1px solid oklch(1 0 0 / 12%)', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 2.5rem 0.5rem 0.75rem', color: 'oklch(0.96 0.005 250)', fontSize: '0.875rem', fontFamily: 'inherit', outline: 'none', lineHeight: '1.25rem' }}
-                  onFocus={e => { e.target.style.borderColor = 'oklch(0.535 0.233 22.3)'; e.target.style.boxShadow = '0 0 0 2px oklch(0.535 0.233 22.3 / 20%)' }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent)' }}
                   onBlur={e => { e.target.style.borderColor = 'oklch(1 0 0 / 12%)'; e.target.style.boxShadow = 'none' }}
                 />
                 <button
@@ -253,7 +253,7 @@ function LoginPage({ onLogin }) {
             <button
               type="submit"
               disabled={loading}
-              style={{ width: '100%', background: 'oklch(0.535 0.233 22.3)', color: 'oklch(0.98 0.003 0)', border: 'none', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 1rem', height: '2.25rem', fontSize: '0.875rem', fontWeight: 500, fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.25rem', opacity: loading ? 0.5 : 1 }}
+              style={{ width: '100%', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 'calc(0.625rem - 2px)', padding: '0.5rem 1rem', height: '2.25rem', fontSize: '0.875rem', fontWeight: 500, fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.25rem', opacity: loading ? 0.5 : 1 }}
             >
               {loading ? (
                 <span style={{ width: '0.875rem', height: '0.875rem', border: '2px solid oklch(0.98 0.003 0 / 30%)', borderTopColor: 'oklch(0.98 0.003 0)', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0, display: 'inline-block' }} />

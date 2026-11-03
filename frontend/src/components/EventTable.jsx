@@ -64,12 +64,12 @@ export default function EventTable({ token, refreshTick }) {
             placeholder={t('events.filter_ip')}
             value={ipFilter}
             onChange={e => onFilterChange(setIpFilter)(e.target.value)}
-            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-600/50 w-36 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 w-36 font-terminal"
           />
           <select
             value={typeFilter}
             onChange={e => onFilterChange(setTypeFilter)(e.target.value)}
-            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-red-600/50 font-terminal"
+            className="bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/50 font-terminal"
           >
             {TYPES.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
