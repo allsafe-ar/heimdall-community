@@ -1173,7 +1173,8 @@ app.put("/heimdall/api/settings/ip-allowlist", authDash, authAdmin, async (req, 
 app.get("/heimdall/api/health", (req, res) => res.json({ ok: true, version: APP_VERSION }));
 
 // Serve dashboard frontend
-app.use("/heimdall", express.static(path.join(__dirname, "../frontend/dist")));
+// /version.json sin caché: el aviso de versión nueva lo consulta y, si quedara guardado, nunca avisaría.
+app.use("/heimdall", express.static(path.join(__dirname, "../frontend/dist"), { setHeaders: (res, p) => { if (path.basename(p) === "version.json") res.setHeader("Cache-Control", "no-store"); } }));
 app.get("/heimdall/*", (req, res) =>
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
 );

@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard'
 import { disconnectSocket } from './lib/socket'
 import allsafeLogo from './assets/allsafe-logo.png'
 import { APP_VERSION } from './lib/version'
+import { AvisoVersionNueva } from '@/components/aviso-version-nueva'
 
 const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const TOKEN_KEY = 'heimdall_token'
@@ -302,11 +303,15 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
-      {!token
-        ? <LoginPage onLogin={handleLogin} />
-        : <Dashboard token={token} onLogout={handleLogout} />
-      }
-    </ErrorBoundary>
+    <>
+      <ErrorBoundary>
+        {!token
+          ? <LoginPage onLogin={handleLogin} />
+          : <Dashboard token={token} onLogout={handleLogout} />
+        }
+      </ErrorBoundary>
+      {/* Afuera del ErrorBoundary: si la pantalla vieja falla, el aviso igual se ve. */}
+      <AvisoVersionNueva sistema='Heimdall' />
+    </>
   )
 }
