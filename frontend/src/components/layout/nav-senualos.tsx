@@ -17,8 +17,10 @@ interface Props {
 }
 
 export function NavSenualos({ activeTemplate, onTemplateChange, role }: Props) {
-  if (!['admin'].includes(role ?? '')) return null
   const { t } = useTranslation()
+  // 🔴 El corte va DESPUÉS de todos los hooks: al vencer la sesión el rol queda vacío y, si cortaba antes,
+  // React tiraba el error #300 (menos hooks que en el dibujo anterior) y se veía la pantalla 500 en vez del login.
+  if (!['admin'].includes(role ?? '')) return null
 
   return (
     <SidebarGroup className='py-0.5'>
