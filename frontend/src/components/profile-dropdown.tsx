@@ -16,7 +16,7 @@ interface Props {
 }
 
 export function ProfileDropdown({ username, nombre, role, onMiCuenta, onLogout }: Props) {
-  const displayName = nombre || username || '—'
+  const displayName = nombre || username || '-'
   const initials = displayName.slice(0, 2).toUpperCase()
 
   return (

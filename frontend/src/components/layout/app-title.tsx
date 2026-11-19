@@ -89,7 +89,8 @@ export function AppTitle({ token, onGoHome }: Props) {
                   </div>
                 )}
                 <div className='grid text-start leading-tight min-w-0 flex-1'>
-                  <span className='font-bold text-base text-primary'>Heimdall</span>
+                  {/* En claro el amarillo no se lee sobre blanco: ámbar profundo (5,1:1); en oscuro, el amarillo. */}
+                  <span className='font-bold text-base text-[#a05100] dark:text-primary'>Heimdall</span>
                   <span className='text-sm text-muted-foreground'>Honeypot Monitor</span>
                 </div>
               </div>

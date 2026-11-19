@@ -3,6 +3,13 @@
 All notable changes to Heimdall Community are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [1.6.2] - 2026-11-19
+
+### Changed
+- Menu group titles in light mode use a deep amber (5.1:1 and 5.0:1): yellow did not read on white (2.8:1).
+- Dark mode: more readable secondary text (5:1).
+- Overview: figures are neutral; the most frequent attack type keeps its type color on the icon, the same as the live feed. No watermark icon.
+
 ## [1.6.1] - 2026-11-18
 
 ### Fixed

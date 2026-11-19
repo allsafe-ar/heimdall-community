@@ -152,7 +152,7 @@
   "senualos.create":          "+ Create decoy",
   "senualos.cancel":          "Cancel",
   "senualos.allsafe_label":   "AllSafe",
-  "senualos.allsafe_desc":    "Internal AllSafe systems — do not include in client deployments",
+  "senualos.allsafe_desc":    "Internal AllSafe systems - do not include in client deployments",
   "senualos.templates_label": "Templates",
   "senualos.templates_desc":  "Generic decoys for any deployment",
   "senualos.no_custom":       "No custom decoys yet. Create one with the button above.",
@@ -215,7 +215,7 @@
   "usuarios.modal_min_chars": "Minimum 6 characters",
 
   "auditoria.title":    "Audit Log",
-  "auditoria.desc":     "System activity log — {{total}} entries",
+  "auditoria.desc":     "System activity log - {{total}} entries",
   "auditoria.loading":  "Loading...",
   "auditoria.no_data":  "No audit records yet",
   "auditoria.col_date": "Date",

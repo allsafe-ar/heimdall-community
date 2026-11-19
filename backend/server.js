@@ -510,7 +510,7 @@ const authDash = async (req, res, next) => {
     const user = await qRow("SELECT enabled, token_version, must_change_password FROM users WHERE id = ?", [decoded.id]);
     if (!user || !user.enabled) return res.status(401).json({ error: "Cuenta bloqueada" });
     if ((user.token_version || 0) !== (decoded.tokenVersion || 0))
-      return res.status(401).json({ error: "Sesión inválida — iniciá sesión nuevamente" });
+      return res.status(401).json({ error: "Sesión inválida - iniciá sesión nuevamente" });
     // 🔴 H-10/11: con la contraseña inicial solo se puede cambiarla.
     if (user.must_change_password && !RUTAS_CAMBIO_OBLIGATORIO.has(req.originalUrl.split("?")[0]))
       return res.status(403).json({ error: "Tenés que cambiar la contraseña inicial antes de seguir.", mustChangePassword: true });
@@ -609,10 +609,10 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // es el único que llama a logEvent y sirve el mismo señuelo. Atajarlos hacía que el
 // honeypot perdiera en silencio toda visita a su puerta de entrada.
 
-// Capture login attempts — never authenticate, always delay + reject
+// Capture login attempts - never authenticate, always delay + reject
 app.post(RUTAS_LOGIN_SENUELO, capturarLoginSenuelo);
 
-// Catch-all trap — log every unknown request
+// Catch-all trap - log every unknown request
 app.use(async (req, res, next) => {
   if (req.path.startsWith("/heimdall")) return next();
   const ip   = clientIp(req);
@@ -622,7 +622,7 @@ app.use(async (req, res, next) => {
   // prioriza la query string, que es la evidencia de por qué se clasificó así.
   const qs = (req.originalUrl || "").slice(req.path.length);
   await logEvent({ rawIp: ip, type, method: req.method, urlPath: req.path, detail: qs ? `query: ${qs.slice(0, 400)}` : ua.slice(0, 200), ua, signals: signalsTag(browserSignals(req)), ...puertosDelPedido(req) });
-  // Return the trap page — keeps attacker engaged
+  // Return the trap page - keeps attacker engaged
   serveTemplate(res, activeTemplate);
 });
 
@@ -1065,7 +1065,7 @@ app.put("/heimdall/api/users/:id/toggle", authDash, authAdmin, async (req, res) 
   const user = await qRow("SELECT username, enabled FROM users WHERE id = ?", [id]);
   if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
   const newState = (user.enabled === 0 || user.enabled === false) ? 1 : 0;
-  // Incrementar token_version al bloquear — invalida tokens existentes del usuario
+  // Incrementar token_version al bloquear - invalida tokens existentes del usuario
   const tvIncr = newState === 0 ? ", token_version = token_version + 1" : "";
   await qRun(`UPDATE users SET enabled = ?${tvIncr} WHERE id = ?`, [newState, id]);
   await logAudit(req.user.id, "user_toggle", `Usuario ${user.username} ${newState ? "habilitado" : "bloqueado"}`);
@@ -1098,7 +1098,7 @@ app.delete("/heimdall/api/events", authDash, authAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Health check — no auth required (used by Docker smoke tests and monitoring)
+// Health check - no auth required (used by Docker smoke tests and monitoring)
 // Expone la versión para poder verificar un despliegue sin entrar al panel.
 // ─── Alertas y allowlist (v1.4.0) ────────────────────────────────────────────
 
@@ -1180,7 +1180,7 @@ app.get("/heimdall/*", (req, res) =>
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HTTP/HTTPS TRAP SERVERS  — puertos 80 y 443 (señuelo en puertos estándar)
+// HTTP/HTTPS TRAP SERVERS  - puertos 80 y 443 (señuelo en puertos estándar)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildTrapApp() {
@@ -1212,14 +1212,14 @@ function buildTrapApp() {
 
 const trapApp = buildTrapApp();
 
-// Puerto 80 — HTTP
+// Puerto 80 - HTTP
 http.createServer(trapApp).listen(80, () => {
   console.log("[Heimdall] Trampa HTTP  → :80");
 }).on("error", e => {
-  if (e.code !== "EADDRINUSE") console.warn(`[trap] HTTP  :80 — ${e.message}`);
+  if (e.code !== "EADDRINUSE") console.warn(`[trap] HTTP  :80 - ${e.message}`);
 });
 
-// Puerto 443 — HTTPS con certificado autofirmado
+// Puerto 443 - HTTPS con certificado autofirmado
 const sslPath = path.join(__dirname, "ssl");
 try {
   const sslOpts = {
@@ -1229,10 +1229,10 @@ try {
   https.createServer(sslOpts, trapApp).listen(443, () => {
     console.log("[Heimdall] Trampa HTTPS → :443");
   }).on("error", e => {
-    if (e.code !== "EADDRINUSE") console.warn(`[trap] HTTPS :443 — ${e.message}`);
+    if (e.code !== "EADDRINUSE") console.warn(`[trap] HTTPS :443 - ${e.message}`);
   });
 } catch {
-  console.warn("[Heimdall] SSL no encontrado — HTTPS en :443 deshabilitado. Generar con: openssl req -x509 -newkey rsa:2048 -keyout ssl/key.pem -out ssl/cert.pem -days 3650 -nodes -subj '/CN=heimdall'");
+  console.warn("[Heimdall] SSL no encontrado - HTTPS en :443 deshabilitado. Generar con: openssl req -x509 -newkey rsa:2048 -keyout ssl/key.pem -out ssl/cert.pem -days 3650 -nodes -subj '/CN=heimdall'");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1356,7 +1356,7 @@ async function initDB() {
     await qRun("UPDATE users SET role = 'admin' WHERE id = (SELECT id FROM (SELECT MIN(id) AS id FROM users) t)");
   }
 
-  // Retención de eventos — máximo 500.000 entradas, purga los más antiguos
+  // Retención de eventos - máximo 500.000 entradas, purga los más antiguos
   async function trimEvents() {
     try {
       const row = await qRow("SELECT COUNT(*) AS c FROM events");
@@ -1408,7 +1408,7 @@ app.use((err, req, res, _next) => {
 initDB().then(() => {
   server.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════════════╗`);
-    console.log(`║  HEIMDALL Community — Honeypot        ║`);
+    console.log(`║  HEIMDALL Community - Honeypot        ║`);
     console.log(`╠══════════════════════════════════════╣`);
     console.log(`║  Dashboard → :${PORT}/heimdall          ║`);
     console.log(`║  Señuelo   → :80 (HTTP)               ║`);

@@ -113,7 +113,7 @@ export default function EventTable({ token, refreshTick }) {
                   ? `Ports: ${ev.ports.join(', ')}`
                   : ev.port
                     ? `:${ev.port}`
-                    : '—'
+                    : '-'
               return (
                 <tr
                   key={ev.id ?? i}
@@ -135,7 +135,7 @@ export default function EventTable({ token, refreshTick }) {
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">
                     {ev.flag && <span className="mr-1">{ev.flag}</span>}
-                    {ev.country || '—'}{ev.city ? ` · ${ev.city}` : ''}
+                    {ev.country || '-'}{ev.city ? ` · ${ev.city}` : ''}
                   </td>
                   <td className="px-4 py-2.5 font-terminal text-xs text-muted-foreground max-w-[240px] truncate">
                     {detail}
@@ -146,7 +146,7 @@ export default function EventTable({ token, refreshTick }) {
                       ev.score >= 50 ? 'text-orange-700 dark:text-orange-400' :
                       ev.score >= 30 ? 'text-yellow-700 dark:text-yellow-400' : 'text-green-700 dark:text-green-400'
                     }`}>
-                      {ev.score ?? '—'}
+                      {ev.score ?? '-'}
                     </span>
                   </td>
                 </tr>

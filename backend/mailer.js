@@ -153,7 +153,7 @@ function crearTransporte(cfg) {
 }
 
 /**
- * Envía una alerta. Devuelve { ok } o { ok:false, error } — nunca lanza, para que
+ * Envía una alerta. Devuelve { ok } o { ok:false, error } - nunca lanza, para que
  * un problema de correo no tumbe la captura, que es lo que el sistema no puede
  * dejar de hacer.
  */

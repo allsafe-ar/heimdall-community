@@ -17,7 +17,7 @@ const TYPE_COLORS = {
   HUMAN:    '#4ade80',
 }
 
-// Objetivo de los ataques (activo defendido por el honeypot). [lon, lat] — Buenos Aires.
+// Objetivo de los ataques (activo defendido por el honeypot). [lon, lat] - Buenos Aires.
 // TODO v1.2+: hacerlo configurable (geo del propio servidor).
 const TARGET = [-58.3816, -34.6037]
 

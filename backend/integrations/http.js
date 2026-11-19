@@ -1,5 +1,5 @@
 "use strict";
-// HTTP helper minimalista (cero dependencias) — portado de Gjallarhorn.
+// HTTP helper minimalista (cero dependencias) - portado de Gjallarhorn.
 const https = require("https");
 const http  = require("http");
 

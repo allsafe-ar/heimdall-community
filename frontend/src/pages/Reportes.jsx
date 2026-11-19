@@ -136,7 +136,7 @@ export default function Reportes({ token }) {
                     <td className='py-1.5 font-terminal text-foreground'>{ip.ip} {ip.campaign && <span className='text-xs text-pink-700 dark:text-pink-400'>CAMPAÑA</span>}</td>
                     <td className='py-1.5 text-muted-foreground'>{ip.flag} {ip.country}</td>
                     <td className='py-1.5 text-right text-muted-foreground tabular-nums'>{ip.hits}</td>
-                    <td className={`py-1.5 text-right font-medium ${ip.behavior_score != null ? bm.color : 'text-muted-foreground'}`}>{ip.behavior_score != null ? `${ip.behavior_score} ${bm.label}` : '—'}</td>
+                    <td className={`py-1.5 text-right font-medium ${ip.behavior_score != null ? bm.color : 'text-muted-foreground'}`}>{ip.behavior_score != null ? `${ip.behavior_score} ${bm.label}` : '-'}</td>
                   </tr>
                 )
               })}

@@ -62,7 +62,7 @@ export default function OverviewCharts({ events, stats }) {
     return Object.values(buckets)
   }, [events])
 
-  // Build ONE data point with all type counts as keys — same pattern as Gjallarhorn
+  // Build ONE data point with all type counts as keys - same pattern as Gjallarhorn
   const chartData = useMemo(() => {
     const raw = stats?.by_type
     if (!raw) return null
@@ -79,7 +79,7 @@ export default function OverviewCharts({ events, stats }) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
 
-      {/* Area chart — activity 24h */}
+      {/* Area chart - activity 24h */}
       <div className="xl:col-span-3 bg-card border border-border rounded-xl p-3 flex flex-col">
         <div className="mb-2">
           <p className="text-sm font-semibold text-foreground">Actividad últimas 24h</p>
@@ -105,7 +105,7 @@ export default function OverviewCharts({ events, stats }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Bar chart — type distribution — Gjallarhorn pattern */}
+      {/* Bar chart - type distribution - Gjallarhorn pattern */}
       <div className="xl:col-span-2 bg-card border border-border rounded-xl p-3 flex flex-col">
         <div className="mb-2">
           <p className="text-sm font-semibold text-foreground flex items-center gap-2">Distribución por tipo<HelpTip side='left' title={t('help.eventtypes.t')} description={t('help.eventtypes.d')} tips={[t('help.eventtypes.k1'), t('help.eventtypes.k2'), t('help.eventtypes.k3'), t('help.eventtypes.k4'), t('help.eventtypes.k5')]} /></p>

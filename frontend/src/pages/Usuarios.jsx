@@ -166,7 +166,7 @@ export default function Usuarios({ token, role }) {
               </TableRow>
             ) : users.map(u => (
               <TableRow key={u.id}>
-                <TableCell className='font-medium'>{u.nombre || '—'}</TableCell>
+                <TableCell className='font-medium'>{u.nombre || '-'}</TableCell>
                 <TableCell className='font-mono text-sm'>{u.username}</TableCell>
                 <TableCell>
                   <Badge variant='outline' className='text-xs'>{ROLE_LABELS[u.role] ?? u.role}</Badge>
@@ -174,7 +174,7 @@ export default function Usuarios({ token, role }) {
                 <TableCell>
                   {u.has2FA
                     ? <ShieldCheck className='size-4 text-green-500' />
-                    : <span className='flex items-center gap-1 text-xs text-muted-foreground'><ShieldOff className='size-4' />—</span>
+                    : <span className='flex items-center gap-1 text-xs text-muted-foreground'><ShieldOff className='size-4' />-</span>
                   }
                 </TableCell>
                 <TableCell>
@@ -185,7 +185,7 @@ export default function Usuarios({ token, role }) {
                   )}
                 </TableCell>
                 <TableCell className='text-xs text-muted-foreground'>
-                  {u.created_at ? new Date(u.created_at).toLocaleDateString('es-AR') : '—'}
+                  {u.created_at ? new Date(u.created_at).toLocaleDateString('es-AR') : '-'}
                 </TableCell>
                 {!isReadOnly && (
                   <TableCell>

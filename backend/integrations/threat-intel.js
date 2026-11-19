@@ -1,5 +1,5 @@
 "use strict";
-// Threat Intel para IPs — portado/adaptado de Gjallarhorn.
+// Threat Intel para IPs - portado/adaptado de Gjallarhorn.
 // Cada fuente devuelve un objeto normalizado y nunca lanza hacia arriba.
 // Fuentes sin API key (gratis, cacheadas 1h): ASN (Team Cymru DNS), Tor exit nodes,
 // FeodoTracker, C2-Tracker.

@@ -80,7 +80,7 @@ export default function TerminalCard({ events, paused, onTogglePause }) {
             <div className="w-3 h-3 rounded-full bg-green-500/80" />
           </div>
           <span className="font-terminal text-xs text-muted-foreground/60 tracking-widest uppercase">
-            heimdall — live feed
+            heimdall - live feed
           </span>
           {paused && (
             <span className="text-xs text-yellow-500 font-terminal animate-pulse">⏸ EN PAUSA</span>

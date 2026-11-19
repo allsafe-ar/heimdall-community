@@ -375,9 +375,9 @@ export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
             </h2>
             <div className="space-y-3 text-sm">
               {[
-                { label: t('account.username'), value: userInfo?.username || '—' },
-                { label: t('account.name'),     value: userInfo?.nombre   || '—' },
-                { label: t('account.role'),     value: ROLE_LABELS[userInfo?.role] || userInfo?.role || '—' },
+                { label: t('account.username'), value: userInfo?.username || '-' },
+                { label: t('account.name'),     value: userInfo?.nombre   || '-' },
+                { label: t('account.role'),     value: ROLE_LABELS[userInfo?.role] || userInfo?.role || '-' },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between gap-4">
                   <span className="text-muted-foreground shrink-0">{label}</span>
@@ -387,7 +387,7 @@ export default function MiCuenta({ token, userInfo, onPasswordChanged }) {
             </div>
           </div>
 
-          {/* Branding AllSafe — admin only */}
+          {/* Branding AllSafe - admin only */}
           {isAdmin && branding !== null && (
             <div className="rounded-lg border bg-card px-5 py-5">
               <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">

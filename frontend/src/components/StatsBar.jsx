@@ -21,37 +21,39 @@ const TYPE_COLORS = {
   HUMAN:    '#4ade80',
 }
 
+// El color de una cifra tiene que decir algo. Las cifras van neutras; el tipo de ataque más frecuente
+// lleva en el ícono el color de su tipo, el mismo del feed en vivo. El texto no se pinta: el amarillo
+// de BOT sobre blanco daba 1,5:1 (19/11/2026).
 function KpiCard({ label, value, sub, color, Icon }) {
   return (
-    <div className="bg-card border border-border rounded-xl relative overflow-hidden">
+    <div className="bg-card border border-border rounded-xl">
       <div className="pt-4 pb-4 px-5">
-        {/* Background icon — large, semi-transparent, top-right */}
-        {Icon && (
-          <Icon
-            className="absolute right-4 top-4 pointer-events-none"
-            style={{ width: 52, height: 52, color, opacity: 0.13 }}
-            strokeWidth={1.2}
-          />
-        )}
-        {/* Label */}
-        <p className="relative z-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 pr-14 leading-tight">
-          {label}
-        </p>
-        {/* Value — font scales down as content length grows */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
+            {label}
+          </p>
+          {Icon && (
+            <Icon
+              className={`size-5 shrink-0 ${color ? '' : 'text-muted-foreground'}`}
+              style={color ? { color } : undefined}
+              strokeWidth={1.6}
+              aria-hidden
+            />
+          )}
+        </div>
+        {/* Value - font scales down as content length grows */}
         <p
-          className={`relative z-10 font-black leading-none tabular-nums pr-14 ${
+          className={`font-black leading-none tabular-nums text-foreground ${
             String(value ?? '').length > 9 ? 'text-lg'
             : String(value ?? '').length > 5 ? 'text-xl'
             : String(value ?? '').length > 3 ? 'text-2xl'
             : 'text-4xl'
           }`}
-          style={{ color }}
         >
-          {value ?? '—'}
+          {value ?? '-'}
         </p>
-        {/* Sub description */}
         {sub && (
-          <p className="relative z-10 text-xs mt-2 text-muted-foreground pr-14 truncate">
+          <p className="text-xs mt-2 text-muted-foreground truncate">
             {sub}
           </p>
         )}
@@ -73,35 +75,31 @@ export default function StatsBar({ stats }) {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       <KpiCard
         label={t('stats.total')}
-        value={stats?.total?.toLocaleString() ?? '—'}
+        value={stats?.total?.toLocaleString() ?? '-'}
         sub={t('stats.total_sub')}
-        color="#f87171"
         Icon={Activity}
       />
       <KpiCard
         label={t('stats.unique_ips')}
-        value={stats?.unique_ips?.toLocaleString() ?? '—'}
+        value={stats?.unique_ips?.toLocaleString() ?? '-'}
         sub={t('stats.unique_ips_sub')}
-        color="#60a5fa"
         Icon={Globe}
       />
       <KpiCard
         label={t('stats.today')}
-        value={stats?.today?.toLocaleString() ?? '—'}
+        value={stats?.today?.toLocaleString() ?? '-'}
         sub={t('stats.today_sub')}
-        color="#fb923c"
         Icon={Wifi}
       />
       <KpiCard
         label={t('stats.top_ip')}
-        value={stats?.top_ip || '—'}
+        value={stats?.top_ip || '-'}
         sub={stats?.top_ip_count ? t('stats.events_count', { count: stats.top_ip_count.toLocaleString() }) : undefined}
-        color="#c084fc"
         Icon={ShieldAlert}
       />
       <KpiCard
         label={t('stats.top_type')}
-        value={topMeta ? topMeta.label : '—'}
+        value={topMeta ? topMeta.label : '-'}
         sub={topTypeEntry ? t('stats.events_count', { count: topTypeEntry[1].toLocaleString() }) : undefined}
         color={topColor}
         Icon={TopIcon}

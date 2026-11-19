@@ -152,7 +152,7 @@
   "senualos.create":          "+ Crear señuelo",
   "senualos.cancel":          "Cancelar",
   "senualos.allsafe_label":   "AllSafe",
-  "senualos.allsafe_desc":    "Sistemas internos AllSafe — no incluir en despliegues a clientes",
+  "senualos.allsafe_desc":    "Sistemas internos AllSafe - no incluir en despliegues a clientes",
   "senualos.templates_label": "Templates",
   "senualos.templates_desc":  "Señuelos genéricos para cualquier despliegue",
   "senualos.no_custom":       "Aún no hay señuelos personalizados. Creá uno con el botón de arriba.",
@@ -217,7 +217,7 @@
   "usuarios.modal_min_chars": "Mínimo 6 caracteres",
 
   "auditoria.title":    "Auditoría",
-  "auditoria.desc":     "Registro de actividad del sistema — {{total}} entradas",
+  "auditoria.desc":     "Registro de actividad del sistema - {{total}} entradas",
   "auditoria.loading":  "Cargando...",
   "auditoria.no_data":  "No hay registros de auditoría aún",
   "auditoria.col_date": "Fecha",

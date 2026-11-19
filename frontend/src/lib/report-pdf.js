@@ -108,7 +108,7 @@ export async function generateReportPDF(data, t) {
 
   table([t('report.by_type'), t('report.events'), 'IPs'], data.by_type.map(r => [r.type, r.count, r.ips]))
   table(['IP', t('report.country'), 'Hits', t('report.behavior')],
-    data.top_ips.slice(0, 10).map(ip => [ip.ip + (ip.campaign ? '  [CAMPAÑA]' : ''), ip.country, ip.hits, ip.behavior_score != null ? `${ip.behavior_score} ${behaviorMeta(ip.behavior_level).label}` : '—']))
+    data.top_ips.slice(0, 10).map(ip => [ip.ip + (ip.campaign ? '  [CAMPAÑA]' : ''), ip.country, ip.hits, ip.behavior_score != null ? `${ip.behavior_score} ${behaviorMeta(ip.behavior_level).label}` : '-']))
   table([t('report.top_paths'), 'Hits', 'IPs'], data.top_paths.slice(0, 8).map(p => [p.path, p.count, p.ips]))
   table([t('report.top_countries'), t('report.events'), 'IPs'], data.by_country.slice(0, 8).map(c => [c.country, c.count, c.ips]))
   if (data.credentials.length) {

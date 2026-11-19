@@ -7,7 +7,7 @@ const BACKEND = import.meta.env.DEV ? 'http://localhost:3005' : ''
 const PAGE_SIZE = 50
 
 function fmtDateTime(ts) {
-  if (!ts) return '—'
+  if (!ts) return '-'
   return new Date(ts).toLocaleString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit'
@@ -104,7 +104,7 @@ export default function Auditoria({ token }) {
                       <span className={`text-xs font-medium ${meta.cls}`}>{meta.label}</span>
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
-                      {log.detail || '—'}
+                      {log.detail || '-'}
                     </td>
                   </tr>
                 )

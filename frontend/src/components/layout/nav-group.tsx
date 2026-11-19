@@ -17,8 +17,9 @@ interface Props extends NavGroupProps {
 // Títulos de grupo en dos tonos del acento de Heimdall, según el frente (1 intenso, 2 apagado).
 // El amarillo sobre fondo claro no se lee: en modo claro va un ámbar más oscuro.
 export const COLOR_FRENTE = {
-  1: 'font-semibold text-amber-600 dark:text-primary',
-  2: 'font-semibold text-amber-700/70 dark:text-primary/70',
+  // En claro, ámbar profundo (el amarillo no se lee sobre blanco): 5,1:1 y 5,0:1.
+  1: 'font-semibold text-[#a05100] dark:text-primary',
+  2: 'font-semibold text-[#866032] dark:text-primary/70',
 } as const
 
 export function NavGroup({ title, items, adminOnly, activeId, onSelect, role, frente }: Props) {
